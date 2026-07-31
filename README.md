@@ -54,7 +54,7 @@ stops the process with a readable message rather than failing on the first reque
 | --- | --- |
 | **Model** | `anthropic/claude-sonnet-4.5` via OpenRouter's OpenAI-compatible `/chat/completions` |
 | **MCP server** | [`@modelcontextprotocol/server-filesystem`](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem) `2026.7.10`, launched over **stdio**, rooted at `sandbox/` |
-| **Tools exercised** | `list_directory`, `read_text_file`, `search_files` — 13 are discovered and offered |
+| **Tools exercised** | `list_allowed_directories`, `list_directory`, `search_files`, `read_text_file` — 13 are discovered and offered |
 
 The model is environment-configurable and never hardcoded. Tools are not hardcoded either:
 the backend calls `tools/list` on the MCP server at boot and passes whatever it finds to the
@@ -121,9 +121,9 @@ Each of these has a fuller write-up in [`docs/adr/`](docs/adr/).
   the turn's items as one array keeps the transport trivial and the item union honest; the
   same shape can later be emitted incrementally over SSE without changing the model. —
   [ADR 0002](docs/adr/0002-turn-shaped-responses.md)
-- **Errors are conversation items, not failed requests.** A provider or MCP failure returns
-  200 with an `error` item, so the UI renders it in the transcript instead of showing a dead
-  request. A failing *tool* becomes a `tool_result` with `isError: true` so the model can
+- **Errors are conversation items, not failed requests.** A provider or MCP failure still
+  returns 2xx, with an `error` item in the turn, so the UI renders it in the transcript
+  instead of showing a dead request. A failing *tool* becomes a `tool_result` with `isError: true` so the model can
   recover on its own. — [ADR 0003](docs/adr/0003-errors-as-conversation-items.md)
 - **In-memory repository behind an interface.** Persistence is out of scope, but the seam
   exists so swapping in a real store is a one-file change.
