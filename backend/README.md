@@ -11,7 +11,12 @@ cp .env.example .env   # fill in OPENROUTER_API_KEY and MCP_SERVER_URL
 npm run dev
 ```
 
-Other scripts: `npm run type-check`, `npm run lint`, `npm run lint:fix`, `npm start`.
+Other scripts: `npm test`, `npm run type-check`, `npm run lint`, `npm run lint:fix`, `npm start`.
+
+`npm test` is Node's built-in runner over `src/**/*.test.ts` — no test dependency, in
+keeping with the no-build-step setup. Coverage is deliberately thin (see below): the HTTP
+layer and the repository are covered end to end with the model and MCP server faked, which
+is what the interfaces in `container.ts` exist for.
 
 TypeScript runs directly on Node's built-in type stripping — no build step, no `tsx`.
 The tradeoff: TypeScript syntax that emits runtime code is unavailable, so no `enum`,
@@ -54,12 +59,12 @@ just because a file happens to be mostly interfaces.
 
 ## API
 
-| Method | Path                              | Purpose                                           |
-| ------ | --------------------------------- | ------------------------------------------------- |
-| `GET`  | `/health`                         | Liveness + active model                           |
-| `POST` | `/api/conversations`              | Create a conversation → `{ id, items }`           |
-| `GET`  | `/api/conversations/:id`          | Full conversation                                 |
-| `POST` | `/api/conversations/:id/messages` | Send `{ content }` → the items this turn produced |
+| Method | Path                              | Status | Response                                             |
+| ------ | --------------------------------- | ------ | ---------------------------------------------------- |
+| `GET`  | `/health`                         | 200    | `{ status, model }`                                  |
+| `POST` | `/api/conversations`              | 201    | `{ id, createdAt, items }`                           |
+| `GET`  | `/api/conversations/:id`          | 200    | `{ id, createdAt, items }`                           |
+| `POST` | `/api/conversations/:id/messages` | 201    | `{ conversationId, items }` — only this turn's items |
 
 Errors are `{ error: { code, message, details? } }`, where `code` is one of the values in
 `src/domain/error-code.ts` — a closed union the frontend can switch on exhaustively. The
@@ -112,7 +117,7 @@ plain `string` — there is no second string they could be confused with.
 
 Failure handling: a failing tool becomes a `tool_result` with `isError: true` so the model
 can recover; a failing provider or MCP connection becomes an `error` item and the turn ends.
-Either way the request still returns 200 with the items so far — the frontend renders the
+Either way the request still succeeds with the items so far — the frontend renders the
 error in the transcript rather than as a dead request.
 
 ## MCP lifecycle
