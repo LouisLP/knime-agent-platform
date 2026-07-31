@@ -94,19 +94,17 @@ export class ChatService {
     for (let iteration = 0; iteration < this.#maxToolIterations; iteration++) {
       const messages = toChatMessages(conversation.items, SYSTEM_PROMPT)
       const completion = await this.#llm.complete(messages, availableTools)
-      const message = completion.choices[0]!.message
-      const requestedCalls = message.tool_calls ?? []
 
-      if (requestedCalls.length === 0) {
+      if (completion.toolCalls.length === 0) {
         this.#record(conversation.id, turnItems, createItem<AssistantMessageItem>(conversation.id, {
           type: 'assistant_message',
-          content: message.content ?? '',
+          content: completion.content ?? '',
         }))
         return
       }
 
       // Parallel tool calls are out of scope, so run them in order.
-      for (const call of requestedCalls)
+      for (const call of completion.toolCalls)
         await this.#runToolCall(conversation.id, turnItems, call)
     }
 
