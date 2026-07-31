@@ -1,0 +1,4 @@
+# reka-ui pulls vue-demi, whose postinstall selects its Vue 3 entry point.
+# Without this approval pnpm exits non-zero and blocks every script.
+allowBuilds:
+  vue-demi: true
