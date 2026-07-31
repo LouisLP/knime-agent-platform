@@ -7,7 +7,7 @@ chat completions) and an MCP server, and returns structured conversation items t
 
 ```bash
 npm install
-cp .env.example .env   # fill in OPENROUTER_API_KEY and MCP_SERVER_URL
+cp .env.example .env   # fill in OPENROUTER_API_KEY; the MCP defaults work as shipped
 npm run dev
 ```
 
@@ -124,8 +124,34 @@ error in the transcript rather than as a dead request.
 
 The MCP session is opened once at boot (`toolProvider.connect()` in `src/index.ts`) and
 reused across requests; tool discovery is cached for the session; the session is closed on
-`SIGINT`/`SIGTERM`. Both `http` (streamable HTTP) and `stdio` transports are supported via
-`MCP_TRANSPORT`. Startup fails loudly if the MCP server is unreachable.
+`SIGINT`/`SIGTERM`. Startup fails loudly if the server cannot be launched — a bad command, a
+missing sandbox directory and a malformed `MCP_ARGS` each stop the process with a message
+naming the actual cause.
+
+The shipped configuration is **stdio**: the backend spawns
+`@modelcontextprotocol/server-filesystem` as a child process and speaks newline-delimited
+JSON-RPC over its stdin/stdout. `client.close()` reaps that child (stdin end → `SIGTERM` →
+`SIGKILL`), so a clean shutdown leaves no orphan process. The `http` (streamable HTTP)
+transport is still supported via `MCP_TRANSPORT=http`, but nothing in the demo setup uses it.
+
+`MCP_SANDBOX_DIR` is appended to `MCP_ARGS` as the server's last positional argument — the
+one directory it is allowed to touch. It is a named setting rather than another entry in the
+argv blob because it is the security boundary, and it is checked for existence before the
+spawn: the server otherwise exits 1 and the failure reaches us as an opaque closed connection.
+
+Three deliberate choices in the MCP → OpenAI translation (`src/service/mcp/mcp.client.ts`):
+
+- **`read_file` is hidden from the model.** It is a deprecated alias whose handler is
+  literally `read_text_file`'s; offering both invites the wrong pick and costs tokens on
+  every request. 13 of the server's 14 tools are offered.
+- **`$schema` is stripped from each `inputSchema`.** Harmless for OpenRouter, but an
+  unexpected key for stricter gateways and dead weight in every request body.
+- **Binary content blocks become placeholders.** An `image`/`audio` block renders as
+  `[image image/png, 41 KB]` rather than its base64 payload — `read_media_file` on a 1 MB PNG
+  would otherwise put ~1.4 MB of useless tokens into the model's context.
+
+The server's stderr is piped rather than inherited and re-logged under an `[mcp]` prefix, so
+`npx` warnings and server diagnostics stay distinguishable from our own logs.
 
 ## Configuration
 
@@ -133,11 +159,16 @@ All config is environment-driven and validated at boot in `src/config/env.ts` �
 or missing variable stops the process with a readable message instead of failing on the
 first request. See `.env.example` for the full list. Do not commit `.env`.
 
-The MCP settings are validated as a discriminated union on `MCP_TRANSPORT`, so `MCP_SERVER_URL`
-is required (and typed non-optional) on the `http` branch and `MCP_COMMAND` on the `stdio`
-branch. The client narrows on the transport instead of asserting non-null on values the schema
-already guaranteed. Blank values are treated as unset, so a var the chosen transport does not
-use can be left empty without failing validation.
+The MCP settings are validated as a discriminated union on `MCP_TRANSPORT` (default `stdio`),
+so `MCP_SERVER_URL` is required (and typed non-optional) on the `http` branch and
+`MCP_COMMAND` on the `stdio` branch. The client narrows on the transport instead of asserting
+non-null on values the schema already guaranteed. Blank values are treated as unset, so a var
+the chosen transport does not use can be left empty without failing validation.
+
+`MCP_ARGS` is a **JSON array**, not a space-separated string: the child is spawned with
+`shell: false`, so argv is passed verbatim and a sandbox path containing a space has to
+survive as one element. Quoting it in `.env` would only land the quote characters inside the
+argument.
 
 `OPENROUTER_MODEL` is typed as `` `${string}/${string}` `` and regex-checked, since
 OpenRouter routes on a `vendor/model` slug and a bare model name otherwise surfaces only as

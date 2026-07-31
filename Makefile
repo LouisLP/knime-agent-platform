@@ -7,7 +7,7 @@ install: ## Install backend + frontend dependencies
 	cd backend && npm install
 	cd frontend && pnpm install
 	@test -f backend/.env || (cp backend/.env.example backend/.env && \
-		echo "\n  Created backend/.env — fill in OPENROUTER_API_KEY and MCP_SERVER_URL\n")
+		echo "\n  Created backend/.env — fill in OPENROUTER_API_KEY (MCP defaults are ready to run)\n")
 
 dev: ## Run backend (:3000) and frontend (:5173) together
 	@$(MAKE) -j2 backend frontend

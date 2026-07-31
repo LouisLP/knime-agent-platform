@@ -1,3 +1,4 @@
+import path from 'node:path'
 import process from 'node:process'
 import { z } from 'zod'
 
@@ -13,6 +14,28 @@ const modelIdSchema = z.string()
   .transform(value => value as ModelId)
 
 const mcpCommandRequired = 'MCP_COMMAND is required when MCP_TRANSPORT=stdio'
+
+/** The committed demo sandbox, `<repo>/sandbox`, from `backend/src/config/`. */
+const defaultSandboxDir = path.resolve(import.meta.dirname, '../../../sandbox')
+
+/**
+ * `MCP_ARGS` is a JSON array, not a space-separated string. The transport
+ * spawns with `shell: false`, so argv is passed verbatim and a sandbox path
+ * containing a space has to survive as a single element — quoting in `.env`
+ * would land the quote characters *inside* the argument.
+ */
+const mcpArgsSchema = z.string()
+  .default('[]')
+  .transform((value, ctx) => {
+    try {
+      const parsed: unknown = JSON.parse(value)
+      return z.array(z.string()).parse(parsed)
+    }
+    catch {
+      ctx.addIssue('MCP_ARGS must be a JSON array of strings, e.g. ["-y","@scope/pkg@1.0.0"]')
+      return z.NEVER
+    }
+  })
 
 const baseSchema = z.object({
   PORT: z.coerce.number('PORT must be a number').int().positive().default(3000),
@@ -39,8 +62,17 @@ const mcpSchema = z.discriminatedUnion('MCP_TRANSPORT', [
   z.object({
     MCP_TRANSPORT: z.literal('stdio'),
     MCP_COMMAND: z.string(mcpCommandRequired).min(1, mcpCommandRequired),
-    // Space-separated in the environment; an argv array everywhere else.
-    MCP_ARGS: z.string().optional().transform(value => value?.split(/\s+/).filter(Boolean) ?? []),
+    MCP_ARGS: mcpArgsSchema,
+    /**
+     * The one directory the filesystem server is allowed to touch. Appended to
+     * `MCP_ARGS` as the server's final positional argument, so it stays a named
+     * setting instead of being buried in an argv blob.
+     */
+    MCP_SANDBOX_DIR: z.string()
+      .default(defaultSandboxDir)
+      // The server resolves relative args against *its own* cwd; resolving here
+      // means the path in a log message is the path it actually opened.
+      .transform(value => path.resolve(value)),
   }),
 ])
 
@@ -54,7 +86,7 @@ const schema = z.preprocess(
     )
     // The union needs its discriminator present before it can pick a branch;
     // `.default()` on a discriminator does not run early enough to provide one.
-    raw.MCP_TRANSPORT ??= 'http'
+    raw.MCP_TRANSPORT ??= 'stdio'
     return raw
   },
   z.intersection(baseSchema, mcpSchema),

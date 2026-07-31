@@ -1,0 +1,13 @@
+quarter,region,product,revenue_eur,customers
+2026-Q1,EMEA,Analytics Platform,412000,38
+2026-Q1,EMEA,Support,86000,29
+2026-Q1,AMER,Analytics Platform,377500,31
+2026-Q1,AMER,Support,71200,24
+2026-Q1,APAC,Analytics Platform,163000,14
+2026-Q1,APAC,Support,28400,11
+2026-Q2,EMEA,Analytics Platform,455900,41
+2026-Q2,EMEA,Support,91300,33
+2026-Q2,AMER,Analytics Platform,468200,36
+2026-Q2,AMER,Support,79800,27
+2026-Q2,APAC,Analytics Platform,190400,17
+2026-Q2,APAC,Support,33100,13
