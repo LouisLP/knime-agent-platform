@@ -1,0 +1,12 @@
+/**
+ * Kabuki — design tokens entry point.
+ *
+ * Two-tier system: primitives (raw scales) → semantic (intent-based,
+ * referencing primitives). Import this file, not the tier files.
+ *
+ * Curtain photo reference: joshiki-maku, kuromisu theatre curtain —
+ * Nesnad, CC BY-SA 4.0.
+ */
+
+@import './tokens/primitives.css';
+@import './tokens/semantic.css';

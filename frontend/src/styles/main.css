@@ -1,0 +1,10 @@
+/**
+ * Global stylesheet entry point (imported once in main.ts).
+ * Layer order fixes the cascade: later layers win regardless of specificity.
+ */
+
+@layer reset, tokens, base;
+
+@import './reset.css' layer(reset);
+@import './tokens.css' layer(tokens);
+@import './base.css' layer(base);

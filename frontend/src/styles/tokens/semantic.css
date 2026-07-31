@@ -1,0 +1,120 @@
+/**
+ * Kabuki — semantic tokens.
+ *
+ * Intent-based names referencing primitives (tokens/primitives.css).
+ * Components consume ONLY these tokens, never sumi/kaki/seiji directly.
+ *
+ * Every color is wrapped in light-dark(light, dark). The theme is dark-first:
+ * dark values are the canonical curtain palette, light values mirror the same
+ * stepping from the opposite end of each scale. `color-scheme` below makes
+ * dark the default; set data-theme on <html> to switch.
+ *
+ * Kaki and seiji are co-equal interactive hues — kaki for primary actions,
+ * seiji for secondary ones — not accent-plus-status. Primary vs. secondary is
+ * a hue choice, not a weight choice: buttons/badges of both render at the same
+ * size, radius, and prominence. `success` borrows the seiji hue, it doesn't
+ * own it.
+ */
+
+/* Dark is the default theme. Opt into light or OS-preference explicitly. */
+:root {
+  color-scheme: dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='auto'] {
+  color-scheme: light dark;
+}
+
+:root {
+  /* ------------------------------------------------------------------ */
+  /* Surface — surfaces step away from the canvas: darker in dark mode,  */
+  /* grayer in light mode                                                */
+  /* ------------------------------------------------------------------ */
+  --color-bg-canvas: light-dark(var(--sumi-0), var(--sumi-950));
+  --color-bg-surface: light-dark(var(--sumi-50), var(--sumi-900));
+  --color-bg-surface-raised: light-dark(var(--sumi-100), var(--sumi-800));
+  --color-bg-surface-hover: light-dark(var(--sumi-200), var(--sumi-700));
+  --color-border-default: light-dark(var(--sumi-200), var(--sumi-700));
+  --color-border-subtle: light-dark(var(--sumi-100), var(--sumi-800));
+
+  /* ------------------------------------------------------------------ */
+  /* Text                                                                */
+  /* ------------------------------------------------------------------ */
+  --color-text-primary: light-dark(var(--sumi-950), var(--sumi-50));
+  --color-text-secondary: light-dark(var(--sumi-600), var(--sumi-300));
+  --color-text-muted: light-dark(var(--sumi-500), var(--sumi-400));
+
+  /* Dark theme's kaki is darker than light theme's, so the two themes need
+     opposite ink: black wins on the light theme's mid kaki, white wins on
+     the dark theme's deeper kaki */
+  --color-text-on-accent: light-dark(var(--sumi-950), var(--sumi-50));
+
+  /* ------------------------------------------------------------------ */
+  /* Accent — primary interactive (kaki)                                 */
+  /* ------------------------------------------------------------------ */
+  --color-accent-default: light-dark(var(--kaki-600), var(--kaki-700));
+  --color-accent-hover: light-dark(var(--kaki-500), var(--kaki-600));
+  --color-accent-active: light-dark(var(--kaki-700), var(--kaki-800));
+  --color-accent-subtle-bg: light-dark(var(--kaki-50), var(--kaki-950));
+  --color-accent-subtle-fg: light-dark(var(--kaki-800), var(--kaki-300));
+
+  /* Focus stays on kaki regardless of which action is focused, so focus
+     state reads consistently across the two hues */
+  --color-focus-ring: light-dark(var(--kaki-600), var(--kaki-400));
+
+  /* ------------------------------------------------------------------ */
+  /* Secondary — co-equal interactive role (seiji)                       */
+  /* ------------------------------------------------------------------ */
+  --color-secondary-default: light-dark(var(--seiji-600), var(--seiji-500));
+  --color-secondary-hover: light-dark(var(--seiji-500), var(--seiji-400));
+  --color-secondary-active: light-dark(var(--seiji-700), var(--seiji-600));
+  --color-secondary-subtle-bg: light-dark(var(--seiji-50), var(--seiji-950));
+  --color-secondary-subtle-fg: light-dark(var(--seiji-800), var(--seiji-300));
+  --color-secondary-border: light-dark(var(--seiji-300), var(--seiji-700));
+
+  /* ------------------------------------------------------------------ */
+  /* Status — borrows seiji, doesn't own it                              */
+  /* ------------------------------------------------------------------ */
+  --color-success-default: light-dark(var(--seiji-600), var(--seiji-500));
+  --color-success-subtle-bg: light-dark(var(--seiji-50), var(--seiji-950));
+  --color-success-subtle-fg: light-dark(var(--seiji-800), var(--seiji-300));
+
+  /* ------------------------------------------------------------------ */
+  /* Brand band + inverse surface — the footer: a full-bleed kaki band   */
+  /* with sumi ink on it, and a near-black note card that stays dark in  */
+  /* both themes                                                         */
+  /* ------------------------------------------------------------------ */
+  --color-bg-brand: light-dark(var(--kaki-600), var(--kaki-700));
+  --color-bg-inverse: var(--sumi-950);
+  --color-text-on-inverse: var(--sumi-100);
+  --color-text-on-inverse-muted: var(--sumi-400);
+  --color-border-on-inverse: var(--sumi-700);
+  --color-accent-on-inverse: var(--kaki-300);
+  --color-secondary-on-inverse: var(--seiji-300);
+
+  /* ------------------------------------------------------------------ */
+  /* Typography roles                                                    */
+  /* ------------------------------------------------------------------ */
+  --font-body: var(--font-sans);
+  --font-heading: var(--font-display);
+  --font-code: var(--font-mono);
+
+  /* ------------------------------------------------------------------ */
+  /* Elevation — one shadow color, composed into sizes; heavier in dark  */
+  /* mode where contrast against the canvas is lower                     */
+  /* ------------------------------------------------------------------ */
+  --shadow-color: light-dark(oklch(20% 0.02 250 / 0.12), oklch(5% 0.01 250 / 0.5));
+  --shadow-sm: 0 1px 2px var(--shadow-color);
+  --shadow-md: 0 2px 8px var(--shadow-color);
+  --shadow-lg: 0 8px 24px var(--shadow-color);
+
+  /* ------------------------------------------------------------------ */
+  /* Focus                                                               */
+  /* ------------------------------------------------------------------ */
+  --focus-ring: var(--border-width-thick) solid var(--color-focus-ring);
+  --focus-ring-offset: 2px;
+}

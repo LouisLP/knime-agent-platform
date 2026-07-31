@@ -1,0 +1,96 @@
+/**
+ * Base element styles — applies the semantic tokens globally.
+ * Only element defaults live here; component styles belong in components.
+ */
+
+html {
+  scroll-padding-top: var(--space-xl);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+body {
+  background-color: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-normal);
+}
+
+/* Screen-reader-only text (headings that structure the page without showing) */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: var(--letter-spacing-tight);
+  line-height: var(--line-height-tight);
+}
+
+h1 {
+  font-size: var(--font-size-4xl);
+}
+
+h2 {
+  font-size: var(--font-size-3xl);
+}
+
+h3 {
+  font-size: var(--font-size-2xl);
+}
+
+h4 {
+  font-size: var(--font-size-xl);
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-code);
+  font-size: var(--font-size-sm);
+}
+
+a {
+  color: var(--color-accent-subtle-fg);
+  text-decoration-color: oklch(from currentcolor l c h / 0.4);
+  text-underline-offset: 3px;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+a:hover {
+  color: var(--color-accent-hover);
+}
+
+:focus-visible {
+  border-radius: var(--radius-sm);
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+::selection {
+  background-color: var(--color-accent-subtle-bg);
+  color: var(--color-accent-subtle-fg);
+}
+
+:root {
+  /* Native form controls (checkboxes, radios, range) and text caret */
+  accent-color: var(--color-accent-default);
+  caret-color: var(--color-accent-default);
+}
