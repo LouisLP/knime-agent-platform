@@ -21,8 +21,8 @@ export function toChatMessages(items: ConversationItem[], systemPrompt: string):
         break
 
       case 'tool_call':
-        // Consecutive tool calls from one turn must share a single assistant
-        // message, so merge into the previous one when it is still open.
+        // Tool calls belong on the assistant message they were emitted with,
+        // so merge into the preceding one rather than opening a new message.
         appendToolCall(messages, item)
         break
 
@@ -55,9 +55,14 @@ function appendToolCall(
     },
   }
 
+  // An assistant message can only be immediately preceded by another one
+  // within a single round: any other item type starts a new message. So the
+  // last message being an assistant is exactly the "same round" case, whether
+  // it already carries calls (a second call from one completion) or only text
+  // (the narration the model emitted alongside them).
   const last = messages.at(-1)
-  if (last?.role === 'assistant' && last.tool_calls) {
-    last.tool_calls.push(toolCall)
+  if (last?.role === 'assistant') {
+    last.tool_calls = [...last.tool_calls ?? [], toolCall]
     return
   }
 

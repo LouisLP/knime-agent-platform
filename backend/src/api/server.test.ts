@@ -1,84 +1,28 @@
 import type { AddressInfo } from 'node:net'
-import type { Env } from '../config/env.ts'
-import type { LlmClient } from '../service/llm/openrouter.client.ts'
-import type {
-  ChatCompletionResponse,
-  ChatMessage,
-  ChatTool,
-} from '../service/llm/openrouter.types.ts'
-import type { ToolExecutionResult, ToolProvider } from '../service/mcp/mcp.client.ts'
 import assert from 'node:assert/strict'
 import { randomUUID } from 'node:crypto'
 import { after, before, describe, it } from 'node:test'
 import { InMemoryConversationRepository } from '../repository/conversation.repository.ts'
 import { ChatService } from '../service/chat.service.ts'
+import { FakeToolProvider, StaticLlmClient, testEnv } from '../testing/fakes.ts'
 import { ChatController } from './controllers/chat.controller.ts'
 import { createServer } from './server.ts'
 
 /**
  * Covers the HTTP layer and the repository: routing, DTO validation, status
- * codes and the error envelope. The model and the MCP server are faked, so the
- * orchestration loop is exercised only far enough to prove the wiring.
+ * codes and the error envelope. The orchestration loop itself is covered in
+ * `service/chat.service.test.ts`; here the model answers in one shot, so this
+ * file only proves the wiring.
  */
 
-const env = {
-  PORT: 0,
-  CORS_ORIGIN: 'http://localhost:5173',
-  OPENROUTER_API_KEY: 'test-key',
-  OPENROUTER_BASE_URL: 'https://openrouter.ai/api/v1',
-  OPENROUTER_MODEL: 'anthropic/claude-sonnet-4.5',
-  MAX_TOOL_ITERATIONS: 5,
-  MCP_TRANSPORT: 'stdio',
-  MCP_COMMAND: 'true',
-  MCP_ARGS: [],
-} satisfies Env
-
-/** Answers every turn with fixed text and never asks for a tool. */
-class FakeLlmClient implements LlmClient {
-  readonly model = env.OPENROUTER_MODEL
-  readonly calls: ChatMessage[][] = []
-
-  complete(messages: ChatMessage[], _tools: ChatTool[]): Promise<ChatCompletionResponse> {
-    this.calls.push(messages)
-    return Promise.resolve({
-      id: 'fake',
-      model: this.model,
-      choices: [{
-        index: 0,
-        finish_reason: 'stop',
-        message: { role: 'assistant', content: 'Hello from the fake model.' },
-      }],
-    })
-  }
-}
-
-class FakeToolProvider implements ToolProvider {
-  connect(): Promise<void> {
-    return Promise.resolve()
-  }
-
-  close(): Promise<void> {
-    return Promise.resolve()
-  }
-
-  listTools(): Promise<ChatTool[]> {
-    return Promise.resolve([])
-  }
-
-  callTool(): Promise<ToolExecutionResult> {
-    return Promise.resolve({ content: 'unused', isError: false })
-  }
-}
-
 describe('http api', () => {
-  const llm = new FakeLlmClient()
   const service = new ChatService(
     new InMemoryConversationRepository(),
-    llm,
+    new StaticLlmClient(),
     new FakeToolProvider(),
-    env,
+    testEnv,
   )
-  const server = createServer(env, new ChatController(service)).listen(0)
+  const server = createServer(testEnv, new ChatController(service)).listen(0)
   let baseUrl: string
 
   before(() => {
@@ -107,7 +51,7 @@ describe('http api', () => {
     const { status, body } = await request('/health')
 
     assert.equal(status, 200)
-    assert.deepEqual(body, { status: 'ok', model: env.OPENROUTER_MODEL })
+    assert.deepEqual(body, { status: 'ok', model: testEnv.OPENROUTER_MODEL })
   })
 
   it('creates an empty conversation', async () => {

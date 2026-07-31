@@ -14,9 +14,24 @@ npm run dev
 Other scripts: `npm test`, `npm run type-check`, `npm run lint`, `npm run lint:fix`, `npm start`.
 
 `npm test` is Node's built-in runner over `src/**/*.test.ts` — no test dependency, in
-keeping with the no-build-step setup. Coverage is deliberately thin (see below): the HTTP
-layer and the repository are covered end to end with the model and MCP server faked, which
-is what the interfaces in `container.ts` exist for.
+keeping with the no-build-step setup. Three files, each aimed at a different seam:
+
+| File                                  | Covers                                                         |
+| ------------------------------------- | -------------------------------------------------------------- |
+| `service/chat.service.test.ts`        | The orchestration loop: item order, budget, every failure path |
+| `service/conversation.mapper.test.ts` | The projection into provider messages                          |
+| `api/server.test.ts`                  | Routing, DTO validation, status codes, the error envelope      |
+
+The model and the MCP server are faked throughout (`src/testing/fakes.ts`), which is what
+the interfaces in `container.ts` exist for — the whole loop runs with no network, no
+provider key and no spawned child process. `ScriptedLlmClient` replays a fixed list of
+completions and throws on an unscripted call, so a loop that runs away fails loudly instead
+of hanging. `testing/` is neither a `.test.ts` file nor a `test/` directory, so Node's
+runner ignores it.
+
+What is _not_ covered: the two real clients (`openrouter.client.ts`, `mcp.client.ts`).
+Both are thin adapters over a network boundary, and testing them means either mocking
+`fetch` or standing up a server — cost out of proportion to the exercise.
 
 TypeScript runs directly on Node's built-in type stripping — no build step, no `tsx`.
 The tradeoff: TypeScript syntax that emits runtime code is unavailable, so no `enum`,
@@ -114,6 +129,17 @@ plain `string` — there is no second string they could be confused with.
 4. No tool calls → append `assistant_message`, done.
 5. Tool calls → append `tool_call`, execute via MCP, append `tool_result`, loop from 2.
 6. Bounded by `MAX_TOOL_ITERATIONS`; exceeding it appends an `error` item.
+
+A completion can carry text _and_ tool calls — models routinely narrate before acting.
+That text is appended as its own `assistant_message` rather than dropped, since it is the
+only explanation the user gets for why a tool ran; the mapper folds it back onto the
+assistant message carrying the calls, so the provider still sees the single message the
+API expects.
+
+Malformed tool arguments are handled like a failing tool rather than a failing turn: the
+JSON parse error comes back as an errored `tool_result`, giving the model a chance to
+retry with well-formed arguments. The raw string is kept on the `tool_call` item so the
+transcript shows what it actually emitted.
 
 Failure handling: a failing tool becomes a `tool_result` with `isError: true` so the model
 can recover; a failing provider or MCP connection becomes an `error` item and the turn ends.
