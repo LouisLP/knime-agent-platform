@@ -8,6 +8,8 @@ async function main(): Promise<void> {
   const { chatController, toolProvider } = createContainer(env)
 
   // Connect once at boot so tool discovery is not on the request path.
+  const source = env.MCP_TRANSPORT === 'stdio' ? env.MCP_SANDBOX_DIR : env.MCP_SERVER_URL
+  console.info(`Connecting to the MCP server over ${env.MCP_TRANSPORT} — ${source}`)
   await toolProvider.connect()
   const tools = await toolProvider.listTools()
   console.info(`MCP connected — ${tools.length} tool(s): ${tools.map(t => t.function.name).join(', ')}`)

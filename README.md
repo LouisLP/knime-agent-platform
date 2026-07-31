@@ -7,6 +7,7 @@ items.
 ```
 frontend/   Vue 3 + TypeScript (Vite)   — chat UI, tool-usage indicator, error states
 backend/    Node 22 + TypeScript        — HTTP API, model <-> tool orchestration, MCP client
+sandbox/    Seed files the MCP filesystem server is allowed to touch
 docs/adr/   Architecture decision records
 ```
 
@@ -28,10 +29,14 @@ Then fill in `backend/.env` (created for you from `.env.example`):
 | --------------------- | -------------------------------------------------------- |
 | `OPENROUTER_API_KEY`  | The provided key. **Never commit this.**                 |
 | `OPENROUTER_MODEL`    | `vendor/model` slug, e.g. `anthropic/claude-sonnet-4.5`  |
-| `MCP_SERVER_URL`      | MCP endpoint when `MCP_TRANSPORT=http`                   |
-| `MCP_COMMAND`/`_ARGS` | Only when `MCP_TRANSPORT=stdio`                          |
+| `MCP_COMMAND`/`_ARGS` | How to launch the MCP server. Pre-filled; `MCP_ARGS` is a JSON array |
+| `MCP_SANDBOX_DIR`     | The server's allowed root. Blank = the committed `sandbox/`          |
 | `MAX_TOOL_ITERATIONS` | Model↔tool round trips per user message (default 5)      |
 | `PORT`, `CORS_ORIGIN` | Backend port and the allowed frontend origin             |
+
+Only `OPENROUTER_API_KEY` actually has to be filled in — the MCP defaults launch the
+filesystem server against `sandbox/` with no further setup. The first boot is a few seconds
+slower while `npx` fetches the server package.
 
 ```bash
 make dev
@@ -48,12 +53,18 @@ stops the process with a readable message rather than failing on the first reque
 | | |
 | --- | --- |
 | **Model** | `anthropic/claude-sonnet-4.5` via OpenRouter's OpenAI-compatible `/chat/completions` |
-| **MCP server** | _TBD — fill in before submission_ |
-| **Tools exercised** | _TBD — fill in before submission_ |
+| **MCP server** | [`@modelcontextprotocol/server-filesystem`](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem) `2026.7.10`, launched over **stdio**, rooted at `sandbox/` |
+| **Tools exercised** | `list_directory`, `read_text_file`, `search_files` — 13 are discovered and offered |
 
 The model is environment-configurable and never hardcoded. Tools are not hardcoded either:
 the backend calls `tools/list` on the MCP server at boot and passes whatever it finds to the
 model, so swapping the MCP server requires no code change.
+
+The server version is pinned because the package uses CalVer and its tool set has changed
+across releases. `sandbox/` is committed with a few seed files (notes, a CSV, a checklist) so
+a fresh clone has something to read — ask _"which region had the highest Q2 revenue?"_ and
+the model has to list, read and reason over the CSV. The server can write and delete inside
+that directory and refuses every path outside it, symlinks included.
 
 ## Architecture
 

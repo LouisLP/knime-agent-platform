@@ -294,11 +294,14 @@ at minimum, and arguably the write tools — is a cheap win.
 
 ## Verdict on existing code
 
+> Resolved in [#6](https://github.com/LouisLP/knime-agent-platform/issues/6); the boxes below are
+> ticked where the fix landed.
+
 `backend/src/service/mcp/mcp.client.ts` is structurally right: connect once, cache
 `tools/list`, pass `inputSchema` through as `parameters`, treat a failed call as a conversation
 event rather than a server fault. Three things need fixing, one is a real bug.
 
-- [ ] **`MCP_ARGS?.split(' ')` breaks on paths with spaces.** `/Users/me/My Documents/sandbox`
+- [x] **`MCP_ARGS?.split(' ')` breaks on paths with spaces.** `/Users/me/My Documents/sandbox`
       becomes two argv entries, and the server treats each as a separate directory, warns
       *"Cannot access directory …"* for both, then exits 1. Since `spawn` runs with
       `shell: false`, quoting in the `.env` file doesn't help either — the quotes end up
@@ -307,24 +310,24 @@ event rather than a server fault. Three things need fixing, one is a real bug.
       with `z.string().transform(JSON.parse)` and validated as `string[]`), or split on a
       delimiter that can't occur in a path. JSON is the honest option and it's a two-line
       change in `env.ts`.
-- [ ] **`renderContent` drops non-text blocks into raw JSON.** `JSON.stringify(block)` on an
+- [x] **`renderContent` drops non-text blocks into raw JSON.** `JSON.stringify(block)` on an
       `image`/`audio`/`resource` block from `read_media_file` dumps the entire base64 payload
       into the model's context — a 1 MB PNG becomes ~1.4 MB of tokens. Add explicit cases per
       the table in §4 and emit a placeholder (`[image image/png, 41 KB]`) instead of the data.
       Cheapest alternative if `read_media_file` is out of scope: filter it out of `listTools()`
       so the model can never call it.
-- [ ] **Set `stderr: 'pipe'` on the transport and log it under a prefix.** Default `'inherit'`
+- [x] **Set `stderr: 'pipe'` on the transport and log it under a prefix.** Default `'inherit'`
       interleaves npm warnings and server diagnostics with our own stdout unlabelled, and the
       most useful message the server ever emits — the startup directory-access failure — is the
       one you'll want captured.
 
 Optional, in rough value order:
 
-- [ ] Filter `read_file` out of `listTools()` — it's a deprecated duplicate of
+- [x] Filter `read_file` out of `listTools()` — it's a deprecated duplicate of
       `read_text_file` and giving the model two identical tools invites the wrong pick.
-- [ ] Strip the `$schema` key from `inputSchema` before sending it as `parameters`. Not
+- [x] Strip the `$schema` key from `inputSchema` before sending it as `parameters`. Not
       required for OpenRouter, but it's noise on every request and it's a one-liner.
-- [ ] Prefer `structuredContent` as a fallback when `content` is empty.
+- [x] Prefer `structuredContent` as a fallback when `content` is empty.
 - [ ] Consider surfacing `annotations.readOnlyHint` to the UI — it's the natural signal for
       flagging destructive tool calls, and this server sets it on all 14 tools.
 
