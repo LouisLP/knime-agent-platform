@@ -111,14 +111,12 @@ export class McpToolProvider implements ToolProvider {
   }
 
   #createTransport() {
-    if (this.#env.MCP_TRANSPORT === 'stdio') {
-      return new StdioClientTransport({
-        command: this.#env.MCP_COMMAND!,
-        args: this.#env.MCP_ARGS?.split(' ').filter(Boolean) ?? [],
-      })
-    }
+    const env = this.#env
 
-    return new StreamableHTTPClientTransport(new URL(this.#env.MCP_SERVER_URL!))
+    if (env.MCP_TRANSPORT === 'stdio')
+      return new StdioClientTransport({ command: env.MCP_COMMAND, args: env.MCP_ARGS })
+
+    return new StreamableHTTPClientTransport(new URL(env.MCP_SERVER_URL))
   }
 }
 
