@@ -103,6 +103,17 @@ export class ChatService {
         return
       }
 
+      // Models routinely narrate before calling a tool ("Let me check that
+      // file..."). Dropping it would lose the only explanation the user gets
+      // for why the tool ran; the mapper folds it back onto the assistant
+      // message carrying the calls, so the provider still sees one message.
+      if (completion.content?.trim()) {
+        this.#record(conversation.id, turnItems, createItem<AssistantMessageItem>(conversation.id, {
+          type: 'assistant_message',
+          content: completion.content,
+        }))
+      }
+
       // Parallel tool calls are out of scope, so run them in order.
       for (const call of completion.toolCalls)
         await this.#runToolCall(conversation.id, turnItems, call)
