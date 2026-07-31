@@ -128,6 +128,12 @@ All config is environment-driven and validated at boot in `src/config/env.ts` â€
 or missing variable stops the process with a readable message instead of failing on the
 first request. See `.env.example` for the full list. Do not commit `.env`.
 
+The MCP settings are validated as a discriminated union on `MCP_TRANSPORT`, so `MCP_SERVER_URL`
+is required (and typed non-optional) on the `http` branch and `MCP_COMMAND` on the `stdio`
+branch. The client narrows on the transport instead of asserting non-null on values the schema
+already guaranteed. Blank values are treated as unset, so a var the chosen transport does not
+use can be left empty without failing validation.
+
 `OPENROUTER_MODEL` is typed as `` `${string}/${string}` `` and regex-checked, since
 OpenRouter routes on a `vendor/model` slug and a bare model name otherwise surfaces only as
 a 404 on the first real request.
