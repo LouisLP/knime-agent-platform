@@ -21,9 +21,11 @@ src/
   api/chat.client.ts          the only module that knows the backend exists
   types/conversation.ts       the wire contract, mirrored from the backend
   stores/chat.ts              conversation + turn state (Pinia setup store)
+  lib/markdown.ts             assistant prose: marked + DOMPurify
+  lib/shiki.ts                the shared highlighter, grammars loaded on demand
   components/chat/            pane, composer, indicator, transport banner
   components/chat/items/      one component per conversation-item type
-  components/walkthrough/     decision slides, their content, and Shiki
+  components/walkthrough/     decision slides and their content
   views/WalkthroughView.vue   routed content of the walkthrough pane
 ```
 
@@ -67,9 +69,21 @@ the whole turn completes), disables the composer, and runs a `role="status"` ind
 that says the assistant is working and may be calling tools. The calls and results then
 appear in the order they happened.
 
-Assistant text renders as plain text. The model sometimes replies in Markdown, which shows
-its syntax literally — rendering it properly means a Markdown parser plus sanitisation,
-which is more surface area than this slice needs.
+Assistant text renders as Markdown, because the model writes Markdown whether or not it is
+asked to — a list of files, a table of regional totals, a bolded number. `lib/markdown.ts`
+is the whole pipeline: `marked` for the parse, DOMPurify for the sanitise. The model's
+output is untrusted (it quotes files it read through MCP, and those are whatever is in
+`sandbox/`), so nothing reaches `v-html` without passing the sanitiser, and a DOMPurify
+hook sends every link to a new tab — the conversation only exists in the tab that opened
+it. Element styling stops where a chat column stops needing it: headings all collapse to
+one step of emphasis, and tables get their own sideways scroll rather than widening the
+pane.
+
+Tool-call arguments are JSON, and a wall of one-colour JSON is the hardest part of the
+transcript to skim, so they are highlighted — the same Shiki setup the walkthrough uses,
+behind the same dynamic `import()`, arriving with the first tool call. Fenced code blocks
+inside assistant prose stay uncoloured: the model can name any language, which is a grammar
+this app cannot have preloaded.
 
 The backend origin comes from `VITE_API_BASE_URL` and defaults to `http://localhost:3000`.
 Keep it in step with the backend's `CORS_ORIGIN`.
@@ -90,18 +104,21 @@ quote — trimmed to the lines that carry the decision, sometimes reflowed to fi
 but make the slide unreadable. The cost is that a rewrite of the quoted code leaves the
 quote stale, so each excerpt names its source path in the caption.
 
-Highlighting is [Shiki](https://shiki.style) in its fine-grained form: four grammars
-(TypeScript, Vue, CSS, Markdown), the JavaScript regex engine instead of the ~1MB
-Oniguruma WASM, and the whole module behind a dynamic `import()` so none of it reaches the
-entry chunk — the chat must not wait on the walkthrough. `WalkthroughView.vue` highlights
+Highlighting is [Shiki](https://shiki.style) in its fine-grained form, assembled in
+`lib/shiki.ts`: the JavaScript regex engine instead of the ~1MB Oniguruma WASM, grammars
+fetched one at a time the first time something asks for one (TypeScript, Vue, CSS and
+Markdown here, JSON for tool arguments), and every caller importing the module dynamically
+so none of it reaches the entry chunk — the chat must not wait on the walkthrough, and a
+pane that never shows code never pays for the highlighter. `WalkthroughView.vue` highlights
 every excerpt once after mount and hands the result down as a map; the slides never call
 Shiki, so re-rendering costs nothing. Until it resolves (or if it fails) the same code
 renders as plain monospace, which is also the whole error strategy for this pane.
 
 The theme is Kanagawa — Wave for dark, Lotus for light, both emitted at once as
-`--shiki-light` / `--shiki-dark` custom properties and resolved in CSS with `light-dark()`.
-Switching themes re-colours the code without re-highlighting it, and the block frame uses
-Kabuki's own surface and border tokens rather than the theme's background.
+`--shiki-light` / `--shiki-dark` custom properties and resolved in CSS with `light-dark()`
+— globally, in `base.css`, since Shiki's markup now appears in both panes. Switching themes
+re-colours the code without re-highlighting it, and the block frame uses Kabuki's own
+surface and border tokens rather than the theme's background.
 
 `pnpm-workspace.yaml` exists only to approve `vue-demi`'s postinstall, which reka-ui pulls
 in; without the approval pnpm exits non-zero and blocks every script. The eslint rule that

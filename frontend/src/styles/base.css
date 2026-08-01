@@ -67,6 +67,18 @@ samp {
   font-size: var(--font-size-sm);
 }
 
+/**
+ * Shiki emits both themes at once as custom properties on every token; this is
+ * where one of them is picked, from the document's `color-scheme`. Global
+ * because Shiki's markup crosses component boundaries — it arrives through
+ * `v-html`, where scoped styles do not reach without `:deep()` — and because a
+ * theme switch should re-colour every block in the app without re-highlighting
+ * a single one.
+ */
+.shiki span {
+  color: light-dark(var(--shiki-light), var(--shiki-dark));
+}
+
 a {
   color: var(--color-accent-subtle-fg);
   text-decoration-color: oklch(from currentcolor l c h / 0.4);
