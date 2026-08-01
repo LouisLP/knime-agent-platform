@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ErrorCode } from '@/types/conversation'
+import type { ErrorCode } from '@/types/conversation.types'
 import { computed } from 'vue'
 
 /**

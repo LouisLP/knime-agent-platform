@@ -1,4 +1,4 @@
-import type { CreditStatus } from '@/types/credits'
+import type { CreditStatus } from '@/types/credits.types'
 import { request } from '@/api/http'
 
 export interface CreditsClient {

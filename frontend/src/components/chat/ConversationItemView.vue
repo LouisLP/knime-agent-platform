@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ConversationItem } from '@/types/conversation'
+import type { ConversationItem } from '@/types/conversation.types'
 import AssistantMessage from '@/components/chat/items/AssistantMessage.vue'
 import ErrorNotice from '@/components/chat/items/ErrorNotice.vue'
 import ToolCallCard from '@/components/chat/items/ToolCallCard.vue'

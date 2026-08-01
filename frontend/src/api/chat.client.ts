@@ -2,7 +2,7 @@ import type {
   Conversation,
   ConversationId,
   SendMessageResult,
-} from '@/types/conversation'
+} from '@/types/conversation.types'
 import { request } from '@/api/http'
 
 /** The conversation half of the backend contract. Transport lives in `http.ts`. */

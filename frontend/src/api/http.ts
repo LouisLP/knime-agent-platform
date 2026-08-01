@@ -1,4 +1,4 @@
-import type { ApiErrorBody, ErrorCode } from '@/types/conversation'
+import type { ApiErrorBody, ErrorCode } from '@/types/conversation.types'
 
 /**
  * The one place that knows the backend exists. Every response is typed as the

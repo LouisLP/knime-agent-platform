@@ -1,4 +1,4 @@
-import type { CreditStatus } from '@/types/credits'
+import type { CreditStatus } from '@/types/credits.types'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { creditsClient } from '@/api/credits.client'

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { TransportFailure } from '@/stores/chat'
+import type { TransportFailure } from '@/stores/chat.store'
 
 /**
  * A request that never landed — backend down, CORS, a 500. Deliberately not a

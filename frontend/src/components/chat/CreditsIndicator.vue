@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed } from 'vue'
-import { useCreditsStore } from '@/stores/credits'
+import { useCreditsStore } from '@/stores/credits.store'
 
 /**
  * How much the provider key has left, as a ring plus a figure. It sits opposite

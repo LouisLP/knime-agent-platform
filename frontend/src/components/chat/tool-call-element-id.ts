@@ -1,4 +1,4 @@
-import type { ToolCallId } from '@/types/conversation'
+import type { ToolCallId } from '@/types/conversation.types'
 
 /**
  * The DOM id a rendered `tool_call` carries, and the target a `tool_result`

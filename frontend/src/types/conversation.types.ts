@@ -74,13 +74,13 @@ export type ConversationItem
 export interface Conversation {
   id: ConversationId
   createdAt: string
-  items: ConversationItem[]
+  items: readonly ConversationItem[]
 }
 
 /** `POST /messages` returns only the items that turn produced. */
 export interface SendMessageResult {
   conversationId: ConversationId
-  items: ConversationItem[]
+  items: readonly ConversationItem[]
 }
 
 /** The body of any non-2xx response (`api/middleware/error-handler.ts`). */
