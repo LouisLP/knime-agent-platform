@@ -76,8 +76,9 @@ Keep it in step with the backend's `CORS_ORIGIN`.
 
 ## The walkthrough pane
 
-Seven slides — one per technical requirement, plus two on what was left out and what comes
-next — in `components/walkthrough/slides.ts`. They are the thought process behind the
+Seven slides in `components/walkthrough/slides.ts`: one opening on the approach, then one for
+each of the four technical requirements (frontend, backend, AI provider, MCP integration), then
+two on what was left out and what comes next. They are the thought process behind the
 build, not a tour of the files: each one is a claim, the reasoning as talking points, and
 the code that backs it up beside them. `DecisionSlide.vue` is a container query, so prose
 and code sit side by side when the pane is wide and stack when it is not, and the pane
