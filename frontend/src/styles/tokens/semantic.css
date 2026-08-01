@@ -83,6 +83,13 @@
   --color-success-subtle-bg: light-dark(var(--seiji-50), var(--seiji-950));
   --color-success-subtle-fg: light-dark(var(--seiji-800), var(--seiji-300));
 
+  /* Danger owns aka outright — nothing interactive uses that hue, so red in
+     the UI always means a failure and never a button you could press. */
+  --color-danger-default: light-dark(var(--aka-600), var(--aka-500));
+  --color-danger-border: light-dark(var(--aka-300), var(--aka-800));
+  --color-danger-subtle-bg: light-dark(var(--aka-50), var(--aka-950));
+  --color-danger-subtle-fg: light-dark(var(--aka-800), var(--aka-300));
+
   /* ------------------------------------------------------------------ */
   /* Brand band + inverse surface — the footer: a full-bleed kaki band   */
   /* with sumi ink on it, and a near-black note card that stays dark in  */

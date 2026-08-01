@@ -1,5 +1,44 @@
 <script setup lang="ts">
-import SurfaceCard from '@/components/ui/SurfaceCard.vue'
+import type { ConversationItem } from '@/types/conversation'
+import { storeToRefs } from 'pinia'
+import { nextTick, onMounted, ref, watch } from 'vue'
+import ChatComposer from '@/components/chat/ChatComposer.vue'
+import ConversationItemView from '@/components/chat/ConversationItemView.vue'
+import UserMessage from '@/components/chat/items/UserMessage.vue'
+import { toolCallElementId } from '@/components/chat/tool-call-element-id'
+import ToolActivityIndicator from '@/components/chat/ToolActivityIndicator.vue'
+import TransportErrorBanner from '@/components/chat/TransportErrorBanner.vue'
+import { useChatStore } from '@/stores/chat'
+
+/**
+ * The chat pane: transcript, in-flight state, composer. It owns scrolling and
+ * the one lookup the item components cannot do for themselves — pairing a
+ * `tool_result` with the `tool_call` it answers.
+ */
+const chat = useChatStore()
+const { items, toolCallsById, isReady, isStarting, isSending, pendingMessage, transportError }
+  = storeToRefs(chat)
+
+const transcript = ref<HTMLElement | null>(null)
+
+onMounted(chat.start)
+
+/** A result whose call is in the transcript can point at it; a stray one cannot. */
+function linkedCallElementId(item: ConversationItem): string | undefined {
+  if (item.type !== 'tool_result' || !toolCallsById.value.has(item.toolCallId))
+    return undefined
+
+  return toolCallElementId(item.toolCallId)
+}
+
+async function scrollToLatest(): Promise<void> {
+  await nextTick()
+  transcript.value?.scrollTo({ top: transcript.value.scrollHeight, behavior: 'smooth' })
+}
+
+// Anything that lengthens the transcript pulls the view down with it: a whole
+// turn arriving at once, and the echo of the message that started it.
+watch([items, pendingMessage, isSending], scrollToLatest)
 </script>
 
 <template>
@@ -10,19 +49,51 @@ import SurfaceCard from '@/components/ui/SurfaceCard.vue'
       </h2>
     </header>
 
-    <div class="chat-pane__body">
-      <SurfaceCard title="Chat lands here">
-        The conversation list and composer arrive with the chat pane ticket — this shell
-        only fixes where they live.
-      </SurfaceCard>
+    <div ref="transcript" class="chat-pane__body">
+      <!-- role="log" so a screen reader announces items as a turn lands. -->
+      <div class="chat-pane__transcript" role="log" aria-live="polite" :aria-busy="isSending">
+        <p v-if="isStarting" class="chat-pane__hint">
+          Opening a conversation…
+        </p>
+
+        <p v-else-if="items.length === 0 && pendingMessage === null" class="chat-pane__hint">
+          The assistant can read the files in <code>sandbox/</code> through an MCP server.
+          Try <em>“which region had the highest Q2 revenue?”</em>
+        </p>
+
+        <ConversationItemView
+          v-for="item in items"
+          :key="item.id"
+          :item="item"
+          :linked-call-element-id="linkedCallElementId(item)"
+        />
+
+        <!-- The turn in flight: the backend only echoes the user message back
+             once the whole turn completes, so show it locally until then. -->
+        <UserMessage v-if="pendingMessage !== null" :content="pendingMessage" pending />
+
+        <ToolActivityIndicator v-if="isSending" />
+      </div>
     </div>
+
+    <footer class="chat-pane__footer">
+      <TransportErrorBanner
+        v-if="transportError !== null"
+        :failure="transportError"
+        :busy="isSending || isStarting"
+        @retry="chat.retry"
+        @restart="chat.restart"
+        @dismiss="chat.dismissError"
+      />
+      <ChatComposer :disabled="!isReady" :sending="isSending" @submit="chat.send" />
+    </footer>
   </main>
 </template>
 
 <style scoped>
 .chat-pane {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   min-block-size: 0;
   background-color: var(--color-bg-surface);
 }
@@ -39,7 +110,7 @@ import SurfaceCard from '@/components/ui/SurfaceCard.vue'
   text-transform: uppercase;
 }
 
-/* The scroll container: only the message list moves, the header stays put. */
+/* The scroll container: only the transcript moves, header and composer stay. */
 .chat-pane__body {
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -47,17 +118,45 @@ import SurfaceCard from '@/components/ui/SurfaceCard.vue'
   padding: var(--space-lg);
 }
 
-/* Stacked layout — the pane is a full screen of its own, the page scrolls. */
+.chat-pane__transcript {
+  display: grid;
+  gap: var(--space-sm);
+  align-content: start;
+  justify-items: stretch;
+}
+
+.chat-pane__hint {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-wrap: pretty;
+}
+
+.chat-pane__footer {
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-lg) var(--space-lg);
+  border-block-start: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
+/* Stacked layout — the pane is a full screen of its own, the page scrolls, so
+   the composer sticks to the bottom of the viewport instead of the pane. */
 @media (width < 900px) {
   .chat-pane__header {
     position: sticky;
     inset-block-start: 0;
-    z-index: 1;
+    z-index: var(--z-sticky);
     background-color: var(--color-bg-surface);
   }
 
   .chat-pane__body {
     overflow-y: visible;
+  }
+
+  .chat-pane__footer {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: var(--z-sticky);
+    background-color: var(--color-bg-surface);
   }
 }
 </style>

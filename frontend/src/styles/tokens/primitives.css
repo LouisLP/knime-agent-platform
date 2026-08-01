@@ -57,6 +57,25 @@
   --seiji-950: oklch(16% 0.03 165);
 
   /* ------------------------------------------------------------------ */
+  /* Color — aka (lacquer red; the crest, not a stripe)                 */
+  /*                                                                     */
+  /* Failure needs a hue no interactive role owns. Kaki sits at h≈41 and */
+  /* would read as a primary action; aka is pushed to h≈27 with more     */
+  /* chroma so the two stay distinguishable side by side.                */
+  /* ------------------------------------------------------------------ */
+  --aka-50: oklch(96% 0.02 27);
+  --aka-100: oklch(92% 0.042 27);
+  --aka-200: oklch(85% 0.078 27);
+  --aka-300: oklch(76% 0.118 27);
+  --aka-400: oklch(68% 0.16 27);
+  --aka-500: oklch(60% 0.19 27);
+  --aka-600: oklch(53% 0.184 27);
+  --aka-700: oklch(45% 0.162 27);
+  --aka-800: oklch(37% 0.134 27);
+  --aka-900: oklch(28% 0.1 27);
+  --aka-950: oklch(20% 0.066 27);
+
+  /* ------------------------------------------------------------------ */
   /* Typography                                                          */
   /* ------------------------------------------------------------------ */
   --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;

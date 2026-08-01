@@ -31,14 +31,24 @@ import ChatPane from '@/components/chat/ChatPane.vue'
 
 <style scoped>
 /**
- * Split screen: chat column is narrow and fixed, walkthrough takes the rest.
- * The shell itself never scrolls — each pane owns its own overflow.
+ * Split screen: walkthrough takes the width, the chat column is narrow, fixed
+ * and on the right — where a chat panel is expected, and where it does not push
+ * the reading column away from the left edge. The shell itself never scrolls;
+ * each pane owns its own overflow.
+ *
+ * The chat stays first in the DOM — it is the app, it should be the first thing
+ * reached by keyboard or screen reader, and it is what the stacked layout puts
+ * on the first screen. Only the columns are reordered, explicitly, below.
  */
 .app-shell {
   display: grid;
-  grid-template-columns: clamp(20rem, 26vw, 26rem) auto 1fr;
+  grid-template-columns: 1fr auto clamp(20rem, 26vw, 26rem);
   block-size: 100dvh;
   isolation: isolate;
+}
+
+.chat-pane {
+  grid-column: 3;
 }
 
 .app-shell > * {
@@ -53,6 +63,8 @@ import ChatPane from '@/components/chat/ChatPane.vue'
 }
 
 .walkthrough-pane {
+  grid-row: 1;
+  grid-column: 1;
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: var(--space-xl) var(--space-gutter);
@@ -75,6 +87,14 @@ import ChatPane from '@/components/chat/ChatPane.vue'
   .app-shell__divider {
     inline-size: auto;
     block-size: var(--border-width-thin);
+  }
+
+  /* One column, so the desktop reordering has to be undone: DOM order (chat,
+     divider, walkthrough) is exactly the stacking order we want. */
+  .chat-pane,
+  .walkthrough-pane {
+    grid-row: auto;
+    grid-column: 1;
   }
 
   .walkthrough-pane {

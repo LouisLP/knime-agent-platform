@@ -4,24 +4,75 @@ Vue 3 + TypeScript on Vite. Styling is plain CSS on the Kabuki token system in
 `src/styles/` — semantic tokens only, no Tailwind, no raw primitives in components.
 Headless behaviour comes from [Reka UI](https://reka-ui.com).
 
+Failure states needed a hue no interactive role owned — kaki is the primary action and
+seiji the secondary one — so the palette gained an `aka` (lacquer red) scale and
+`--color-danger-*` semantics. Red in this UI always means something failed, never
+something you can press.
+
 ## The shell
 
-`App.vue` is the layout, not a page: a fixed narrow chat pane beside a scrollable
-walkthrough pane, split by a decorative Reka `Separator`. Routes only decide what fills
-the walkthrough pane, so the chat pane stays mounted across navigation.
+`App.vue` is the layout, not a page: a scrollable walkthrough pane beside a fixed narrow
+chat pane on the right, split by a decorative Reka `Separator`. Routes only decide what
+fills the walkthrough pane, so the chat pane stays mounted across navigation.
 
 ```
 src/
   App.vue                     split-screen shell
-  components/chat/            chat pane (placeholder until the chat ticket)
+  api/chat.client.ts          the only module that knows the backend exists
+  types/conversation.ts       the wire contract, mirrored from the backend
+  stores/chat.ts              conversation + turn state (Pinia setup store)
+  components/chat/            pane, composer, indicator, transport banner
+  components/chat/items/      one component per conversation-item type
   components/ui/              shared surfaces
   views/WalkthroughView.vue   routed content of the walkthrough pane
 ```
 
+The chat is first in the DOM and last in the columns: it is the app, so it should be the
+first thing a keyboard or screen reader reaches, but a reading column pushed off the left
+edge reads worse than one that starts there. Only the columns are reordered, in CSS.
+
 Each pane owns its own overflow — the shell itself never scrolls. Under 900px there is no
 room for two columns, so the panes stack: the chat takes the first screen (it is the app,
-with a sticky header), the walkthrough follows beneath it, and the page scrolls instead of
-the panes.
+with a sticky header and composer), the walkthrough follows beneath it, and the page
+scrolls instead of the panes.
+
+## The chat pane
+
+`src/types/conversation.ts` mirrors `backend/src/domain/conversation-item.ts` field for
+field. The API hands back exactly those shapes and components render them directly, so
+there is no mapping layer to drift — the price is that a backend change has to be copied
+across, which a single shared package would solve in a longer-lived codebase.
+
+`ConversationItemView.vue` is the only place that switches on `type`. A `v-if` chain, not
+a component lookup table, because it is what keeps each child's props type-checked against
+its own member of the union. A `tool_call` renders its name always and its arguments
+behind a Reka `Collapsible`; the matching `tool_result` sits indented beneath it, links
+back via `aria-describedby` (both sides derive the id from `toolCallId`), and switches to
+the danger tokens when `isError`.
+
+Two kinds of failure, deliberately shown differently:
+
+|                       |                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| **`error` item**      | The backend recorded it in the transcript — a provider outage, a dead tool, the iteration budget. Rendered in the flow, where it happened. |
+| **Transport failure** | The request never landed, so nothing exists server-side. A strip above the composer with Retry and Dismiss — never a transcript item.      |
+
+The one transport failure retrying cannot fix is a `not_found`: conversations live in the
+backend's memory, so a restart invalidates the id the tab is holding. The store flags that
+case and the banner offers a new conversation instead of a retry.
+
+Responses are not streamed, so while a turn is in flight the pane cannot say _which_ tool
+is running. It shows the user's message immediately (the backend only echoes it back when
+the whole turn completes), disables the composer, and runs a `role="status"` indicator
+that says the assistant is working and may be calling tools. The calls and results then
+appear in the order they happened.
+
+Assistant text renders as plain text. The model sometimes replies in Markdown, which shows
+its syntax literally — rendering it properly means a Markdown parser plus sanitisation,
+which is more surface area than this slice needs.
+
+The backend origin comes from `VITE_API_BASE_URL` and defaults to `http://localhost:3000`.
+Keep it in step with the backend's `CORS_ORIGIN`.
 
 `pnpm-workspace.yaml` exists only to approve `vue-demi`'s postinstall, which reka-ui pulls
 in; without the approval pnpm exits non-zero and blocks every script. The eslint rule that
