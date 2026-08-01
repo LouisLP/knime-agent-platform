@@ -23,7 +23,7 @@ src/
   stores/chat.ts              conversation + turn state (Pinia setup store)
   components/chat/            pane, composer, indicator, transport banner
   components/chat/items/      one component per conversation-item type
-  components/ui/              shared surfaces
+  components/walkthrough/     decision slides, their content, and Shiki
   views/WalkthroughView.vue   routed content of the walkthrough pane
 ```
 
@@ -73,6 +73,34 @@ which is more surface area than this slice needs.
 
 The backend origin comes from `VITE_API_BASE_URL` and defaults to `http://localhost:3000`.
 Keep it in step with the backend's `CORS_ORIGIN`.
+
+## The walkthrough pane
+
+Seven slides — one per technical requirement, plus two on what was left out and what comes
+next — in `components/walkthrough/slides.ts`. They are the thought process behind the
+build, not a tour of the files: each one is a claim, the reasoning as talking points, and
+the code that backs it up beside them. `DecisionSlide.vue` is a container query, so prose
+and code sit side by side when the pane is wide and stack when it is not, and the pane
+scroll-snaps at `proximity` so slides read as steps without trapping a long one.
+
+Excerpts are pasted by hand rather than imported with `?raw`. An excerpt is an edited
+quote — trimmed to the lines that carry the decision, sometimes reflowed to fit the column
+— and a live import would drag in the imports and error handling that make the file work
+but make the slide unreadable. The cost is that a rewrite of the quoted code leaves the
+quote stale, so each excerpt names its source path in the caption.
+
+Highlighting is [Shiki](https://shiki.style) in its fine-grained form: four grammars
+(TypeScript, Vue, CSS, Markdown), the JavaScript regex engine instead of the ~1MB
+Oniguruma WASM, and the whole module behind a dynamic `import()` so none of it reaches the
+entry chunk — the chat must not wait on the walkthrough. `WalkthroughView.vue` highlights
+every excerpt once after mount and hands the result down as a map; the slides never call
+Shiki, so re-rendering costs nothing. Until it resolves (or if it fails) the same code
+renders as plain monospace, which is also the whole error strategy for this pane.
+
+The theme is Kanagawa — Wave for dark, Lotus for light, both emitted at once as
+`--shiki-light` / `--shiki-dark` custom properties and resolved in CSS with `light-dark()`.
+Switching themes re-colours the code without re-highlighting it, and the block frame uses
+Kabuki's own surface and border tokens rather than the theme's background.
 
 `pnpm-workspace.yaml` exists only to approve `vue-demi`'s postinstall, which reka-ui pulls
 in; without the approval pnpm exits non-zero and blocks every script. The eslint rule that

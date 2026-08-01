@@ -62,6 +62,12 @@ import ChatPane from '@/components/chat/ChatPane.vue'
   background-color: var(--color-border-default);
 }
 
+/**
+ * The pane is the scroll container, so snapping lives here and the slides only
+ * declare where they align. `proximity`, not `mandatory`: a slide can be taller
+ * than the viewport, and mandatory snapping would fight anyone reading the
+ * bottom of one.
+ */
 .walkthrough-pane {
   grid-row: 1;
   grid-column: 1;
@@ -69,6 +75,8 @@ import ChatPane from '@/components/chat/ChatPane.vue'
   overscroll-behavior: contain;
   padding: var(--space-xl) var(--space-gutter);
   background-color: var(--color-bg-canvas);
+  scroll-snap-type: y proximity;
+  scroll-padding-block-start: var(--space-xl);
 }
 
 /**
