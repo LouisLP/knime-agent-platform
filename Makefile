@@ -1,4 +1,4 @@
-.PHONY: help install dev backend frontend check clean
+.PHONY: help install dev backend frontend test check clean
 
 help: ## Show this help
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) | awk -F':.*?## ' '{printf "  %-10s %s\n", $$1, $$2}'
@@ -18,9 +18,13 @@ backend: ## Run the backend only
 frontend: ## Run the frontend only
 	cd frontend && pnpm dev
 
-check: ## Type-check and lint both sides
+test: ## Run the backend test suite
+	cd backend && npm test
+
+check: ## Type-check and lint both sides, then run the tests
 	cd backend && npm run type-check && npm run lint
 	cd frontend && pnpm type-check && pnpm lint
+	@$(MAKE) test
 
 clean: ## Remove installed dependencies
 	rm -rf backend/node_modules frontend/node_modules

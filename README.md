@@ -5,11 +5,18 @@ which orchestrates an OpenRouter model and an MCP server and returns structured 
 items.
 
 ```
-frontend/   Vue 3 + TypeScript (Vite)   — chat UI, tool-usage indicator, error states
-backend/    Node 22 + TypeScript        — HTTP API, model <-> tool orchestration, MCP client
+frontend/   Vue 3 + TypeScript (Vite)   chat UI, tool-usage indicator, error states, walkthrough
+backend/    Node 22 + TypeScript        HTTP API, model <-> tool orchestration, MCP client
 sandbox/    Seed files the MCP filesystem server is allowed to touch
 docs/adr/   Architecture decision records
+docs/       MCP research notes and the recorded end-to-end smoke test
 ```
+
+The frontend is a split screen: the chat on the right, and a walkthrough beside it. Seven
+slides, one for each technical requirement in the brief plus an opener and two on what was left
+out and what comes next, each pairing a decision with the code behind it. It's there because
+the exercise gets presented as well as read ([ADR 0005](docs/adr/0005-walkthrough-pane.md)).
+The chat is the app, though, and it was finished before any of the walkthrough existed.
 
 The per-side READMEs go deeper: [backend/README.md](backend/README.md) covers layering,
 branded ids, and the orchestration loop; [frontend/README.md](frontend/README.md) covers the
@@ -25,27 +32,41 @@ make install
 
 Then fill in `backend/.env` (created for you from `.env.example`):
 
-| Variable              | Notes                                                    |
-| --------------------- | -------------------------------------------------------- |
-| `OPENROUTER_API_KEY`  | The provided key. **Never commit this.**                 |
-| `OPENROUTER_MODEL`    | `vendor/model` slug, e.g. `anthropic/claude-sonnet-4.5`  |
-| `MCP_COMMAND`/`_ARGS` | How to launch the MCP server. Pre-filled; `MCP_ARGS` is a JSON array |
-| `MCP_SANDBOX_DIR`     | The server's allowed root. Blank = the committed `sandbox/`          |
-| `MAX_TOOL_ITERATIONS` | Model↔tool round trips per user message (default 5)      |
-| `PORT`, `CORS_ORIGIN` | Backend port and the allowed frontend origin             |
+| Variable               | Notes                                                                       |
+| ---------------------- | --------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY`   | The provided key. **Never commit this.**                                    |
+| `OPENROUTER_MODEL`     | `vendor/model` slug, e.g. `anthropic/claude-sonnet-4.5`                     |
+| `OPENROUTER_BASE_URL`  | Defaults to `https://openrouter.ai/api/v1`                                  |
+| `MCP_TRANSPORT`        | `stdio` (default) or `http`. Picks which of the vars below are read          |
+| `MCP_COMMAND`/`_ARGS`  | How to launch the MCP server. Pre-filled; `MCP_ARGS` is a JSON array         |
+| `MCP_SANDBOX_DIR`      | The server's allowed root. Blank uses the committed `sandbox/`               |
+| `MCP_SERVER_URL`       | Only read when `MCP_TRANSPORT=http`. Nothing in the demo setup uses it       |
+| `MAX_TOOL_ITERATIONS`  | Model↔tool round trips per user message (default 5)                         |
+| `PORT`, `CORS_ORIGIN`  | Backend port and the allowed frontend origin                                |
 
-Only `OPENROUTER_API_KEY` actually has to be filled in — the MCP defaults launch the
-filesystem server against `sandbox/` with no further setup. The first boot is a few seconds
-slower while `npx` fetches the server package.
+Only `OPENROUTER_API_KEY` actually has to be filled in. The MCP defaults launch the
+filesystem server against `sandbox/` with no further setup, and the first boot is a few
+seconds slower while `npx` fetches the server package.
+
+The frontend takes no setup. It reads `VITE_API_BASE_URL` if you set one and otherwise
+assumes `http://localhost:3000`, which is where `make dev` puts the backend. If you do move
+the backend, keep `CORS_ORIGIN` in step with wherever the frontend ends up.
 
 ```bash
 make dev
 ```
 
 Backend on `http://localhost:3000`, frontend on `http://localhost:5173`.
-`make check` runs type-check + lint on both sides; `make help` lists everything.
+`make check` runs type-check and lint on both sides and then the tests; `make test` runs just
+the tests, and `make help` lists everything.
 
-Config is validated at boot in `backend/src/config/env.ts` — a missing or malformed variable
+Broad test coverage is out of scope, so there are 36 tests aimed at three seams that would be
+expensive to get wrong: the orchestration loop, the projection into provider messages, and the
+HTTP layer. The model and the MCP server are faked throughout, so the whole thing runs with no
+network, no provider key and no spawned child process. See
+[backend/README.md](backend/README.md#running) for what's deliberately left uncovered.
+
+Config is validated at boot in `backend/src/config/env.ts`. A missing or malformed variable
 stops the process with a readable message rather than failing on the first request.
 
 ## Model and MCP tool
@@ -54,17 +75,21 @@ stops the process with a readable message rather than failing on the first reque
 | --- | --- |
 | **Model** | `anthropic/claude-sonnet-4.5` via OpenRouter's OpenAI-compatible `/chat/completions` |
 | **MCP server** | [`@modelcontextprotocol/server-filesystem`](https://www.npmjs.com/package/@modelcontextprotocol/server-filesystem) `2026.7.10`, launched over **stdio**, rooted at `sandbox/` |
-| **Tools exercised** | `list_allowed_directories`, `list_directory`, `search_files`, `read_text_file` — 13 are discovered and offered |
+| **Tools exercised** | `list_allowed_directories`, `list_directory`, `search_files`, `read_text_file`. The server exposes 14, of which 13 are discovered and offered |
 
 The model is environment-configurable and never hardcoded. Tools are not hardcoded either:
 the backend calls `tools/list` on the MCP server at boot and passes whatever it finds to the
-model, so swapping the MCP server requires no code change.
+model, so swapping the MCP server requires no code change. The one tool held back is
+`read_file`, a deprecated alias whose handler is literally `read_text_file`'s (offering both
+just invites the wrong pick and costs tokens on every request).
 
 The server version is pinned because the package uses CalVer and its tool set has changed
 across releases. `sandbox/` is committed with a few seed files (notes, a CSV, a checklist) so
-a fresh clone has something to read — ask _"which region had the highest Q2 revenue?"_ and
-the model has to list, read and reason over the CSV. The server can write and delete inside
-that directory and refuses every path outside it, symlinks included.
+a fresh clone has something to read. Ask _"which region had the highest Q2 revenue?"_ and the
+model has to list, search, read and then reason over the CSV, which is a much better exercise
+of the loop than a single lookup. The server can write and delete inside that directory and
+refuses every path outside it, symlinks included.
+[ADR 0004](docs/adr/0004-filesystem-mcp-over-stdio.md) has the rest of the reasoning.
 
 ## Architecture
 
@@ -111,7 +136,8 @@ are linked by `toolCallId`.
 
 ## Design decisions and trade-offs
 
-Each of these has a fuller write-up in [`docs/adr/`](docs/adr/).
+The ones that were genuinely arguable have a fuller write-up in [`docs/adr/`](docs/adr/); the
+rest are linked to the code that explains them.
 
 - **Node/TypeScript backend instead of Go or Java.** The brief prefers Go or Java; within a
   4–6 hour timebox one language across both sides buys a single shared conversation-item
@@ -129,9 +155,16 @@ Each of these has a fuller write-up in [`docs/adr/`](docs/adr/).
   exists so swapping in a real store is a one-file change.
 - **Branded ids.** Three UUID-shaped ids flow through the same call sites in the
   orchestrator; brands make mixing them a compile error at zero runtime cost.
-- **MCP session opened once at boot** and reused, with discovery cached for the session and
-  a clean shutdown on `SIGINT`/`SIGTERM`. Startup fails loudly if the server is unreachable,
-  which is the right trade for a single-instance app.
+- **The filesystem MCP server, over stdio, rooted at a committed sandbox.** It runs on a
+  fresh clone with nothing to install by hand, and the seed files give the model something
+  worth reasoning over. The session is opened once at boot and reused, discovery is cached for
+  the session, and shutdown on `SIGINT`/`SIGTERM` reaps the child process. Startup fails loudly
+  if the server is unreachable, which is the right trade for a single-instance app. —
+  [ADR 0004](docs/adr/0004-filesystem-mcp-over-stdio.md)
+- **A walkthrough pane beside the chat.** The brief asks for a minimal chat interface, and
+  this is more than that. It exists because the exercise gets presented as well as read, so the
+  demo and the argument for it may as well be the same artifact. It was built last, after the
+  loop already worked end to end. — [ADR 0005](docs/adr/0005-walkthrough-pane.md)
 
 ## Out of scope
 
@@ -141,14 +174,26 @@ broad test coverage.
 
 ## Time allocation
 
-_Fill in at the end._
+Roughly four hours, so the bottom of the timebox.
 
 | Area | Time |
 | --- | --- |
-| Design, scaffolding, project setup | |
-| Backend: domain model + layering | |
-| Backend: OpenRouter client | |
-| Backend: MCP client + tool loop | |
-| Frontend: chat UI and states | |
-| Docs and cleanup | |
-| **Total** | |
+| Design, scaffolding, project setup | 0:50 |
+| Backend: domain model + layering | 0:35 |
+| Backend: OpenRouter client | 0:20 |
+| Backend: MCP client + tool loop | 0:50 |
+| Frontend: chat UI and states | 0:40 |
+| Frontend: walkthrough pane | 0:25 |
+| Docs and cleanup | 0:20 |
+| **Total** | **~4:00** |
+
+The order matters more than the numbers. The design and the domain model came first, because
+the conversation-item union is the contract both sides are built against and getting it wrong
+later is expensive. The MCP client took the longest single stretch, which is the part I'd
+expect: it's the only piece with a child process, a lifecycle and a security boundary to get
+right, and the research behind it is in
+[`docs/research/mcp-filesystem.md`](docs/research/mcp-filesystem.md).
+
+The walkthrough pane was built last, deliberately. It's the one thing here that isn't asked
+for, so it only got time once the loop worked end to end and had been smoke-tested against the
+real model and the real server ([`docs/smoke-test.md`](docs/smoke-test.md)).
