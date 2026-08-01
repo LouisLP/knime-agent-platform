@@ -80,6 +80,36 @@ import ChatPane from '@/components/chat/ChatPane.vue'
 }
 
 /**
+ * Attention follows the pointer: hovering one pane recedes the other, so the
+ * walkthrough is not competing for attention while you are using the chat.
+ * Typing counts as using the chat (`:focus-within`) — the caret stays there
+ * even when the pointer wanders — but an explicit hover on the walkthrough
+ * always wins, so pointing at it brings it back.
+ *
+ * Hover-capable pointers only, and only in the two-column layout: on a touch
+ * screen or the stacked layout there is no "other pane beside this one".
+ */
+@media (hover: hover) and (width >= 900px) {
+  .chat-pane,
+  .walkthrough-pane {
+    transition: opacity var(--duration-normal) var(--ease-out);
+  }
+
+  .app-shell:has(.walkthrough-pane:hover) .chat-pane,
+  .app-shell:has(.chat-pane:hover) .walkthrough-pane,
+  .app-shell:has(.chat-pane:focus-within):not(:has(.walkthrough-pane:hover)) .walkthrough-pane {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-pane,
+  .walkthrough-pane {
+    transition: none;
+  }
+}
+
+/**
  * Under 900px there is no room for two columns, so the panes stack: the chat
  * takes the first screen (it is the app), the walkthrough follows below it and
  * the page — not the panes — scrolls.
