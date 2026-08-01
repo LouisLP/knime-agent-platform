@@ -1,45 +1,12 @@
-import type { HighlighterCore } from 'shiki/core'
 import type { CodeExcerpt } from './slides'
-import { createHighlighterCore } from 'shiki/core'
-import { createJavaScriptRegexEngine } from 'shiki/engine/javascript'
+import type { Language } from '@/lib/shiki'
+import { highlightCode } from '@/lib/shiki'
 
 /**
- * Shiki, assembled by hand rather than pulled in as a bundle: only the four
- * grammars the excerpts actually use, and the JavaScript regex engine, which
- * skips the ~1MB Oniguruma WASM. Themes and grammars load as dynamic imports,
- * and this module is itself imported dynamically, so none of it lands in the
- * entry chunk — the chat pane is the app and must not wait on the walkthrough's
- * syntax highlighting.
+ * The grammars the slides quote — a subset of what the shared highlighter can
+ * load, so an excerpt cannot name a language nothing knows how to fetch.
  */
-export type ExcerptLanguage = 'typescript' | 'vue' | 'css' | 'markdown'
-
-/**
- * Kanagawa, after the Hokusai wave print: muted ink with warm accents, which is
- * the same brief Kabuki's sumi/kaki/seiji palette answers. Both themes are
- * emitted at once as `--shiki-light` / `--shiki-dark` custom properties and
- * resolved in CSS by `light-dark()`, so a theme switch costs no re-highlight.
- */
-const THEMES = { light: 'kanagawa-lotus', dark: 'kanagawa-wave' } as const
-
-let highlighterPromise: Promise<HighlighterCore> | undefined
-
-function loadHighlighter(): Promise<HighlighterCore> {
-  highlighterPromise ??= createHighlighterCore({
-    themes: [
-      import('shiki/themes/kanagawa-lotus.mjs'),
-      import('shiki/themes/kanagawa-wave.mjs'),
-    ],
-    langs: [
-      import('shiki/langs/typescript.mjs'),
-      import('shiki/langs/vue.mjs'),
-      import('shiki/langs/css.mjs'),
-      import('shiki/langs/markdown.mjs'),
-    ],
-    engine: createJavaScriptRegexEngine(),
-  })
-
-  return highlighterPromise
-}
+export type ExcerptLanguage = Extract<Language, 'typescript' | 'vue' | 'css' | 'markdown'>
 
 /**
  * Highlights every excerpt in one pass, keyed by the excerpt object itself —
@@ -53,16 +20,9 @@ function loadHighlighter(): Promise<HighlighterCore> {
 export async function highlightExcerpts(
   excerpts: readonly CodeExcerpt[],
 ): Promise<ReadonlyMap<CodeExcerpt, string>> {
-  const highlighter = await loadHighlighter()
+  const highlighted = await Promise.all(excerpts.map(
+    async excerpt => [excerpt, await highlightCode(excerpt.code, excerpt.lang)] as const,
+  ))
 
-  return new Map(excerpts.map(excerpt => [
-    excerpt,
-    highlighter.codeToHtml(excerpt.code, {
-      lang: excerpt.lang,
-      themes: THEMES,
-      // No `color:` on the spans — only the two custom properties, which the
-      // stylesheet feeds to `light-dark()`.
-      defaultColor: false,
-    }),
-  ]))
+  return new Map(highlighted)
 }

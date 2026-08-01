@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { CollapsibleContent, CollapsibleRoot, CollapsibleTrigger } from 'reka-ui'
-import { computed } from 'vue'
+import { computed, shallowRef, watch } from 'vue'
 
 /**
  * One tool the model decided to call. The name is always visible — that is the
@@ -21,6 +21,31 @@ const hasArgs = computed(
 )
 
 const formattedArgs = computed(() => JSON.stringify(props.args, null, 2) ?? String(props.args))
+
+/**
+ * Arguments are JSON, and a wall of one-colour JSON is the hardest part of the
+ * transcript to skim: highlighting is what separates the keys from the paths
+ * and patterns that are the actual content of the call.
+ *
+ * Shiki is behind a dynamic `import()` so the chat's entry chunk stays free of
+ * it — it arrives with the first tool call and is a singleton thereafter. Until
+ * then (and if it fails) the same JSON renders as plain monospace: same font,
+ * same size, so nothing moves when the colour lands.
+ */
+const highlightedArgs = shallowRef<string>()
+
+watch([formattedArgs, hasArgs], async ([json, present]) => {
+  if (!present)
+    return
+
+  try {
+    const { highlightCode } = await import('@/lib/shiki')
+    highlightedArgs.value = await highlightCode(json, 'json')
+  }
+  catch {
+    // Colour is the only thing lost; the plain rendering below stands in.
+  }
+}, { immediate: true })
 </script>
 
 <template>
@@ -42,7 +67,10 @@ const formattedArgs = computed(() => JSON.stringify(props.args, null, 2) ?? Stri
       </CollapsibleTrigger>
 
       <CollapsibleContent v-if="hasArgs" class="tool-call__content">
-        <pre class="tool-call__args">{{ formattedArgs }}</pre>
+        <!-- eslint-disable-next-line vue/no-v-html -- Shiki escapes the code it
+             wraps, so tool arguments cannot smuggle markup through it. -->
+        <div v-if="highlightedArgs" class="tool-call__args" v-html="highlightedArgs" />
+        <pre v-else class="tool-call__args tool-call__args--plain">{{ formattedArgs }}</pre>
       </CollapsibleContent>
     </CollapsibleRoot>
   </article>
@@ -101,12 +129,33 @@ const formattedArgs = computed(() => JSON.stringify(props.args, null, 2) ?? Stri
   padding: 0 var(--space-xs) var(--space-xs);
 }
 
+/**
+ * Shiki emits its own `<pre class="shiki">`, so the wrapper carries the frame
+ * and the `pre` inside it carries the scroll. The plain fallback is the `pre`
+ * itself, hence the shared class.
+ */
 .tool-call__args {
-  overflow-x: auto;
-  padding: var(--space-xs);
   border-radius: var(--radius-sm);
   background-color: var(--color-bg-surface);
   color: var(--color-text-secondary);
+}
+
+.tool-call__args :deep(pre),
+.tool-call__args--plain {
+  overflow-x: auto;
+  padding: var(--space-xs);
   font-size: var(--font-size-xs);
+  /* A file path in an argument is long and the pane is narrow: wrap rather
+     than hide the end of the call behind a sideways scroll. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  tab-size: 2;
+}
+
+/* Shiki makes the block focusable so it can be scrolled by keyboard. */
+.tool-call__args :deep(pre:focus-visible),
+.tool-call__args--plain:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: calc(var(--focus-ring-offset) * -1);
 }
 </style>

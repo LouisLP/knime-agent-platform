@@ -64,15 +64,6 @@ defineProps<{ excerpt: CodeExcerpt, html?: string }>()
   tab-size: 2;
 }
 
-/**
- * Both themes are in the markup as custom properties; `light-dark()` picks one
- * from the document's `color-scheme`. Nothing is re-highlighted when the theme
- * changes, and the plain fallback inherits ordinary body text.
- */
-.excerpt__code :deep(.shiki span) {
-  color: light-dark(var(--shiki-light), var(--shiki-dark));
-}
-
 /* Shiki makes the block focusable so it can be scrolled by keyboard. */
 .excerpt__code :deep(pre:focus-visible),
 .excerpt__code--plain:focus-visible {

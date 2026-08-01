@@ -35,10 +35,12 @@ next to them. It's the argument, not a tour of the file tree.
   trimmed to the lines carrying the decision, and a live import would drag in the imports and
   error handling that make a file work but make a slide unreadable. The cost is that rewriting
   quoted code leaves the quote stale, so every excerpt names its source path in the caption.
-- Syntax highlighting is Shiki behind a dynamic `import()`, with four grammars and the
-  JavaScript regex engine instead of the ~1MB Oniguruma WASM. None of it reaches the entry
-  chunk, because the chat must not wait on the walkthrough. If it never resolves, the code
-  renders as plain monospace and the pane still works.
+- Syntax highlighting is Shiki behind a dynamic `import()`, with the JavaScript regex engine
+  instead of the ~1MB Oniguruma WASM and grammars loaded on demand. None of it reaches the
+  entry chunk, because the chat must not wait on the walkthrough. If it never resolves, the
+  code renders as plain monospace and the pane still works. The chat pane later took the same
+  highlighter for tool-call arguments, which is why it lives in `lib/shiki.ts` rather than
+  under `components/walkthrough/`.
 - Routes only decide what fills the walkthrough pane, so the chat pane stays mounted across
   navigation and a conversation survives moving around.
 - Below 900px there's no room for two columns, so the panes stack with the chat first. The

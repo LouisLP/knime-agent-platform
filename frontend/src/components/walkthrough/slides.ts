@@ -42,7 +42,7 @@ export const decisionSlides: DecisionSlide[] = [
       'Conventions came from skills files (Vue, TypeScript, CSS, semantic HTML), so I made those '
       + 'style calls once up front instead of per file.',
       'Libraries were picked so the timebox went on the agentic loop rather than plumbing: Zod, '
-      + 'Reka UI, the official MCP SDK, Shiki for this pane.',
+      + 'Reka UI, the official MCP SDK, Shiki for code, marked and DOMPurify for assistant prose.',
       'Kabuki, the design system from my portfolio, came in whole. None of the budget went into '
       + 'inventing a look.',
     ],
@@ -368,8 +368,7 @@ for (let iteration = 0; iteration < this.#maxToolIterations; iteration++) {
       + 'order, so concurrency is a scheduling change rather than a model change.',
       'Human approval before a tool runs, since the tool_call item already exists as the natural '
       + 'pause point. Cancelling a turn in flight, too (the iteration cap is a budget, not a stop button).',
-      'Markdown rendering for assistant text, and the item union moved into a shared package so the '
-      + 'frontend mirror cannot drift.',
+      'The item union moved into a shared package so the frontend mirror cannot drift.',
     ],
     excerpts: [
       {
