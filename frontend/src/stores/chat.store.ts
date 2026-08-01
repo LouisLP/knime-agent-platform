@@ -6,7 +6,8 @@ import type {
 } from '@/types/conversation.types'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
-import { ApiError, chatClient } from '@/api/chat.client'
+import { chatClient } from '@/api/chat.client'
+import { ApiError } from '@/api/http'
 
 /**
  * A request that never landed. `conversationLost` marks the one failure that

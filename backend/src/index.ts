@@ -5,7 +5,7 @@ import { createContainer } from './container.ts'
 
 async function main(): Promise<void> {
   const env = loadEnv()
-  const { chatController, toolProvider } = createContainer(env)
+  const { chatController, creditsController, toolProvider } = createContainer(env)
 
   // Connect once at boot so tool discovery is not on the request path.
   const source = env.MCP_TRANSPORT === 'stdio' ? env.MCP_SANDBOX_DIR : env.MCP_SERVER_URL
@@ -14,7 +14,7 @@ async function main(): Promise<void> {
   const tools = await toolProvider.listTools()
   console.info(`MCP connected — ${tools.length} tool(s): ${tools.map(t => t.function.name).join(', ')}`)
 
-  const server = createServer(env, chatController).listen(env.PORT, () => {
+  const server = createServer(env, chatController, creditsController).listen(env.PORT, () => {
     console.info(`Backend listening on http://localhost:${env.PORT} (model: ${env.OPENROUTER_MODEL})`)
   })
 

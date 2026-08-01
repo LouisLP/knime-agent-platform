@@ -112,6 +112,7 @@ inward and every cross-layer collaborator behind an interface (`LlmClient`, `Too
 | `POST` | `/api/conversations`              | Create a conversation → `{ id, items }`          |
 | `GET`  | `/api/conversations/:id`          | Full conversation                                |
 | `POST` | `/api/conversations/:id/messages` | Send `{ content }` → the items this turn produced |
+| `GET`  | `/api/credits`                    | Provider spend: `{ usage, limit, remaining, scope }` |
 
 ### Conversation items
 

@@ -1,13 +1,16 @@
 import type { Env } from './config/env.ts'
 import type { ToolProvider } from './service/mcp/mcp.client.ts'
 import { ChatController } from './api/controllers/chat.controller.ts'
+import { CreditsController } from './api/controllers/credits.controller.ts'
 import { InMemoryConversationRepository } from './repository/conversation.repository.ts'
 import { ChatService } from './service/chat.service.ts'
+import { OpenRouterCreditsClient } from './service/llm/credits.client.ts'
 import { OpenRouterClient } from './service/llm/openrouter.client.ts'
 import { McpToolProvider } from './service/mcp/mcp.client.ts'
 
 export interface Container {
   chatController: ChatController
+  creditsController: CreditsController
   toolProvider: ToolProvider
 }
 
@@ -23,6 +26,7 @@ export function createContainer(env: Env): Container {
 
   return {
     chatController: new ChatController(chatService),
+    creditsController: new CreditsController(new OpenRouterCreditsClient(env)),
     toolProvider,
   }
 }

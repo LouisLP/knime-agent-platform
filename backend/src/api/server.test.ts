@@ -4,8 +4,9 @@ import { randomUUID } from 'node:crypto'
 import { after, before, describe, it } from 'node:test'
 import { InMemoryConversationRepository } from '../repository/conversation.repository.ts'
 import { ChatService } from '../service/chat.service.ts'
-import { FakeToolProvider, StaticLlmClient, testEnv } from '../testing/fakes.ts'
+import { FakeCreditsReader, FakeToolProvider, StaticLlmClient, testEnv } from '../testing/fakes.ts'
 import { ChatController } from './controllers/chat.controller.ts'
+import { CreditsController } from './controllers/credits.controller.ts'
 import { createServer } from './server.ts'
 
 /**
@@ -22,7 +23,11 @@ describe('http api', () => {
     new FakeToolProvider(),
     testEnv,
   )
-  const server = createServer(testEnv, new ChatController(service)).listen(0)
+  const server = createServer(
+    testEnv,
+    new ChatController(service),
+    new CreditsController(new FakeCreditsReader()),
+  ).listen(0)
   let baseUrl: string
 
   before(() => {
@@ -111,6 +116,13 @@ describe('http api', () => {
 
     assert.equal(status, 400)
     assert.equal(body.error.code, 'validation_error')
+  })
+
+  it('reports the credit figures for the provider key', async () => {
+    const { status, body } = await request('/api/credits')
+
+    assert.equal(status, 200)
+    assert.deepEqual(body, { usage: 2.5, limit: 10, remaining: 7.5, scope: 'key' })
   })
 
   it('answers an unknown route with the error envelope', async () => {
