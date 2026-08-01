@@ -1,4 +1,6 @@
 import type { Env } from '../config/env.ts'
+import type { CreditStatus } from '../domain/credits.ts'
+import type { CreditsReader } from '../service/llm/credits.client.ts'
 import type { LlmClient, LlmCompletion } from '../service/llm/openrouter.client.ts'
 import type { ChatMessage, ChatTool, ChatToolCall } from '../service/llm/openrouter.types.ts'
 import type { ToolExecutionResult, ToolProvider } from '../service/mcp/mcp.client.ts'
@@ -121,6 +123,26 @@ export class StaticLlmClient implements LlmClient {
   complete(messages: ChatMessage[]): Promise<LlmCompletion> {
     this.calls.push(messages)
     return Promise.resolve(assistantSays(this.#content))
+  }
+}
+
+/** Reports fixed spend figures, or fails, without touching the provider. */
+export class FakeCreditsReader implements CreditsReader {
+  readonly #result: CreditStatus | Error
+
+  constructor(result: CreditStatus | Error = {
+    usage: 2.5,
+    limit: 10,
+    remaining: 7.5,
+    scope: 'key',
+  }) {
+    this.#result = result
+  }
+
+  read(): Promise<CreditStatus> {
+    return this.#result instanceof Error
+      ? Promise.reject(this.#result)
+      : Promise.resolve(this.#result)
   }
 }
 

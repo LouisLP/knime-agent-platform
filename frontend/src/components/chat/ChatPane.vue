@@ -4,11 +4,13 @@ import { storeToRefs } from 'pinia'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import ChatComposer from '@/components/chat/ChatComposer.vue'
 import ConversationItemView from '@/components/chat/ConversationItemView.vue'
+import CreditsIndicator from '@/components/chat/CreditsIndicator.vue'
 import UserMessage from '@/components/chat/items/UserMessage.vue'
 import { toolCallElementId } from '@/components/chat/tool-call-element-id'
 import ToolActivityIndicator from '@/components/chat/ToolActivityIndicator.vue'
 import TransportErrorBanner from '@/components/chat/TransportErrorBanner.vue'
 import { useChatStore } from '@/stores/chat'
+import { useCreditsStore } from '@/stores/credits'
 
 /**
  * The chat pane: transcript, in-flight state, composer. It owns scrolling and
@@ -19,9 +21,21 @@ const chat = useChatStore()
 const { items, toolCallsById, isReady, isStarting, isSending, pendingMessage, transportError }
   = storeToRefs(chat)
 
+const credits = useCreditsStore()
+
 const transcript = ref<HTMLElement | null>(null)
 
-onMounted(chat.start)
+onMounted(() => {
+  void chat.start()
+  void credits.refresh()
+})
+
+// A completed turn is the only thing here that spends anything, so that is the
+// one moment the balance can have moved.
+watch(isSending, (sending, wasSending) => {
+  if (wasSending && !sending)
+    void credits.refresh()
+})
 
 /** A result whose call is in the transcript can point at it; a stray one cannot. */
 function linkedCallElementId(item: ConversationItem): string | undefined {
@@ -47,6 +61,7 @@ watch([items, pendingMessage, isSending], scrollToLatest)
       <h2 id="chat-pane-heading" class="chat-pane__title">
         Conversation
       </h2>
+      <CreditsIndicator />
     </header>
 
     <div ref="transcript" class="chat-pane__body">
@@ -99,6 +114,10 @@ watch([items, pendingMessage, isSending], scrollToLatest)
 }
 
 .chat-pane__header {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+  justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
   border-block-end: var(--border-width-thin) solid var(--color-border-subtle);
 }
