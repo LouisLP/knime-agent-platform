@@ -34,20 +34,17 @@ export const decisionSlides: DecisionSlide[] = [
     id: 'pre-considerations',
     kicker: 'Pre-considerations',
     title: 'What was settled before the first commit',
-    lede: 'Four to six hours, graded on process rather than polish. So the decisions that would be '
-      + 'expensive to reverse got made first, and written down somewhere that would hold me to them.',
+    lede: 'Four to six hours, graded on process rather than polish. So I made the expensive-to-reverse '
+      + 'decisions first and wrote them down somewhere that would hold me to them.',
     points: [
-      'Every ticket is a GitHub issue; a map issue carries the constraints and the things still '
-      + 'unspecified. It is the first thing I re-read when picking work back up.',
-      'Conventions came from skills files — Vue, TypeScript, CSS, code organisation, semantic HTML — '
-      + 'so style decisions were made once, up front, instead of per file.',
-      'Libraries were chosen to spend the timebox on the agentic loop, not on plumbing: Zod for '
-      + 'boot-time config validation, Reka UI for headless accessible behaviour, the official MCP '
-      + 'SDK for the stdio transport, Shiki for this pane.',
-      'Kabuki — the design system from my portfolio — came in whole. Plain CSS, semantic tokens only, '
-      + 'dark-first via light-dark(). No part of the budget went into inventing a look.',
-      'One layering idea on both sides: dependencies point inward, every seam is an interface, and a '
-      + 'single file does the wiring.',
+      'Every ticket is a GitHub issue, with one map issue carrying the constraints and the open '
+      + 'questions. It is the first thing I re-read when picking the work back up.',
+      'Conventions came from skills files (Vue, TypeScript, CSS, semantic HTML), so I made those '
+      + 'style calls once up front instead of per file.',
+      'Libraries were picked so the timebox went on the agentic loop rather than plumbing: Zod, '
+      + 'Reka UI, the official MCP SDK, Shiki for this pane.',
+      'Kabuki, the design system from my portfolio, came in whole. None of the budget went into '
+      + 'inventing a look.',
     ],
     excerpts: [
       {
@@ -76,25 +73,25 @@ export const decisionSlides: DecisionSlide[] = [
     kicker: 'Frontend',
     title: 'One union, switched on in one place',
     lede: 'The backend returns five kinds of conversation item. The frontend\'s whole job is to render '
-      + 'them faithfully and to be honest about what it cannot know yet.',
+      + 'them faithfully and stay honest about what it cannot know yet.',
     points: [
-      'types/conversation.ts mirrors the backend\'s domain union field for field, so the API response '
-      + 'is rendered directly with no mapping layer to drift. The price is a manual copy across, '
-      + 'which one shared package would solve in a longer-lived codebase.',
-      'ConversationItemView is the only place that switches on the discriminant — a v-if chain rather '
-      + 'than a component lookup table, because that is what keeps each child\'s props type-checked '
+      'types/conversation.ts mirrors the backend union field for field, so responses render with no '
+      + 'mapping layer in between. The price is a manual copy across (a shared package would fix that '
+      + 'in a longer-lived codebase).',
+      'ConversationItemView is the only place that switches on the discriminant. It is a v-if chain '
+      + 'rather than a lookup table, because that is what keeps each child\'s props type-checked '
       + 'against its own member of the union.',
-      'What the chat shows: the tool name always, its arguments behind a collapsible, and the result '
-      + 'indented underneath, linked back by aria-describedby. Both sides derive the element id from '
-      + 'toolCallId, so the association falls out of the data model.',
-      'Two failures, shown differently on purpose. An error item happened server-side and belongs in '
-      + 'the transcript where it occurred; a transport failure never landed, so it is a strip above '
-      + 'the composer with Retry — never a transcript item.',
-      'Responses are not streamed, so mid-turn the pane cannot say which tool is running. It echoes '
-      + 'the user\'s message immediately, disables the composer, and runs a role="status" indicator '
-      + 'rather than inventing progress it does not have.',
-      'Kabuki\'s red belongs to failure alone — kaki is the primary action, seiji the secondary one — '
-      + 'so nothing red in this UI is ever something you can press.',
+      'A tool call shows its name, its arguments behind a collapsible, and its result indented '
+      + 'underneath. Both sides derive the element id from toolCallId, so the aria-describedby link '
+      + 'falls out of the data model.',
+      'Two failures, deliberately shown differently. An error item happened server-side and belongs in '
+      + 'the transcript; a transport failure never landed, so it sits above the composer with a Retry '
+      + 'button instead.',
+      'Nothing is streamed, so mid-turn the pane genuinely cannot say which tool is running. It echoes '
+      + 'your message, disables the composer, and shows a status indicator rather than inventing '
+      + 'progress it does not have.',
+      'Kabuki\'s red belongs to failure alone (kaki is the primary action, seiji the secondary), so '
+      + 'nothing red here is ever something you can press.',
     ],
     excerpts: [
       {
@@ -147,22 +144,20 @@ export const decisionSlides: DecisionSlide[] = [
     kicker: 'Backend',
     title: 'Node, layered, and honest about the trade',
     lede: 'The brief prefers Go or Java. I used Node and TypeScript, wrote down why, and kept the part '
-      + 'that actually transfers — the layering — framework-agnostic.',
+      + 'that actually transfers (the layering) framework-agnostic.',
     points: [
-      'I am not experienced enough in Go to be fast in it, and Java would have cost a refresher. Inside '
-      + 'a four-hour budget that trade buys hours for the orchestration loop, which is the thing '
-      + 'being evaluated. It is recorded in ADR 0001 as a deviation, not smoothed over.',
-      'Node 22 runs the TypeScript directly via native type stripping: no build step, no tsx. '
-      + 'erasableSyntaxOnly turns non-erasable syntax into a type error rather than a SyntaxError at boot.',
+      'I am not fast enough in Go, and Java would have cost me a refresher. Inside a four-hour budget '
+      + 'that trade buys hours for the orchestration loop, which is the thing being evaluated. ADR '
+      + '0001 records it as a deviation rather than smoothing it over.',
+      'Node 22 runs the TypeScript directly via native type stripping, so there is no build step and '
+      + 'no tsx. erasableSyntaxOnly makes non-erasable syntax a type error instead of a boot-time crash.',
       'api → service → repository → domain, dependencies pointing inward, every cross-layer '
-      + 'collaborator behind an interface — LlmClient, ToolProvider, ConversationRepository. '
-      + 'container.ts is the only file that constructs anything.',
-      'That shape maps onto Spring or a Go service unchanged, which is the honest answer to "but it '
-      + 'is not Go": the language is the part I swapped, not the design.',
-      'Three UUID-shaped ids flow through the same call sites in the orchestrator. Branding them makes '
-      + 'mixing them a compile error and costs nothing at runtime — they are plain strings in JSON.',
-      'I am a frontend engineer first, and the backend reflects that: careful and conventional rather '
-      + 'than clever. The seams are where I spent the thinking.',
+      + 'collaborator behind an interface. container.ts is the only file that constructs anything, and '
+      + 'that shape maps onto Spring or a Go service unchanged.',
+      'Three UUID-shaped ids meet in the orchestrator, so branding them makes mixing them a compile '
+      + 'error. Costs nothing at runtime (they are plain strings in JSON).',
+      'I am a frontend engineer first and the backend shows it: conventional rather than clever. The '
+      + 'seams are where I spent the thinking.',
     ],
     excerpts: [
       {
@@ -202,23 +197,21 @@ export type Brand<T, B extends string> = T & { readonly [brand]: B }`,
     id: 'ai-provider',
     kicker: 'AI provider',
     title: 'OpenRouter, and the assumptions underneath it',
-    lede: 'OpenRouter speaks the OpenAI chat-completions shape, so the client is fetch plus Zod — no '
-      + 'vendor SDK, and no provider abstraction beyond the one interface the service depends on.',
+    lede: 'OpenRouter speaks the OpenAI chat-completions shape, so the client is just fetch plus Zod. '
+      + 'No vendor SDK, and no abstraction beyond the one interface the service depends on.',
     points: [
-      'The model is anthropic/claude-sonnet-4.5, read from OPENROUTER_MODEL and never hardcoded. '
-      + 'Swapping to a different vendor\'s model is an env change.',
-      'A bare model name instead of a vendor/model slug is the likeliest way to misconfigure this, and '
-      + 'the provider only reports it as a 404 on the first real request — so the shape is a template '
-      + 'literal type and a regex that fails at boot instead.',
-      'Assumption made explicit: one completion per call. The wire response carries a choices array, '
-      + 'but we never ask for more than one, so it is unwrapped at the boundary and no caller needs '
-      + 'an index or a non-null assertion.',
-      'Every failure mode — unreachable host, timeout, non-2xx, unparseable body, unexpected shape — '
-      + 'leaves as a ProviderError. Including a 200 that carries an error object instead of a '
-      + 'completion, which this API does.',
-      'A 60-second timeout, because a hung provider call would otherwise pin a request open forever.',
-      'Tested against the real model end to end, not only against fakes: docs/smoke-test.md records a '
-      + 'full run — question in, tools/list, two tool rounds over the sandbox, answer out.',
+      'The model is anthropic/claude-sonnet-4.5, read from OPENROUTER_MODEL and never hardcoded, so '
+      + 'switching vendors is an env change.',
+      'Passing a bare model name instead of a vendor/model slug is the easiest way to misconfigure '
+      + 'this, and OpenRouter only tells you with a 404 on the first real request. A template literal '
+      + 'type and a regex catch it at boot instead.',
+      'One completion per call, stated outright. The wire response carries a choices array but we '
+      + 'never ask for more than one, so it gets unwrapped at the boundary and no caller needs an index.',
+      'Every failure mode leaves as a ProviderError, including a 200 that carries an error object '
+      + 'instead of a completion (which this API does). A 60-second timeout stops a hung call pinning '
+      + 'a request open forever.',
+      'Tested against the real model end to end, not just fakes. docs/smoke-test.md records a full '
+      + 'run: question in, tools/list, two tool rounds over the sandbox, answer out.',
     ],
     excerpts: [
       {
@@ -261,25 +254,23 @@ const choice = parsed.data.choices[0]!`,
     kicker: 'MCP integration',
     title: 'The filesystem server, over stdio, on a committed sandbox',
     lede: 'The official filesystem MCP server, launched as a child process and rooted at a directory '
-      + 'that ships with the repo — so a fresh clone has something real for the model to read.',
+      + 'that ships with the repo, so a fresh clone has something real for the model to read.',
     points: [
-      'stdio over HTTP: no second service to start, no port to coordinate, and the sandbox root is an '
-      + 'argv element rather than a URL. The server package is pinned, because it uses CalVer and its '
-      + 'tool set has changed across releases.',
-      'MCP_ARGS is a JSON array, not a space-separated string: the transport spawns with shell: false, '
-      + 'so a sandbox path containing a space has to survive as one argv element.',
-      'Tools are not hardcoded. The backend calls tools/list at boot and passes whatever it finds to '
-      + 'the model, so swapping in a different MCP server needs no code change. Thirteen are '
-      + 'discovered; read_file is withheld as a deprecated alias of read_text_file — offering both '
-      + 'invites the wrong pick and costs tokens on every request.',
-      'One session, opened at boot and reused, with discovery cached and a clean close on SIGINT and '
-      + 'SIGTERM. Startup fails loudly if the server is unreachable — the right trade for a '
+      'stdio rather than HTTP: no second service to start and no port to coordinate. The package is '
+      + 'pinned, since it uses CalVer and its tool set has changed across releases.',
+      'MCP_ARGS is a JSON array rather than a space-separated string, because the transport spawns '
+      + 'with shell: false and a sandbox path containing a space has to survive as one argv element.',
+      'Tools are discovered, not hardcoded. The backend calls tools/list at boot and hands the model '
+      + 'whatever comes back, so swapping in a different server needs no code change. read_file is the '
+      + 'one exception, withheld as a deprecated alias that just invites the wrong pick.',
+      'One session, opened at boot and reused, discovery cached, closed cleanly on SIGINT and SIGTERM. '
+      + 'Startup fails loudly if the server is unreachable, which is the right trade for a '
       + 'single-instance app.',
-      'The loop is the whole exercise: project the conversation into provider messages, call the model '
-      + 'with the discovered tools, and either finish or run the calls and go round again. Every '
-      + 'step is recorded as a conversation item, which is why the UI can show tool activity at all.',
-      'Bounded by MAX_TOOL_ITERATIONS. Running out appends an error item rather than looping forever, '
-      + 'and a tool that fails comes back as a result with isError so the model can recover itself.',
+      'The loop is the whole exercise: project the conversation into messages, call the model with the '
+      + 'discovered tools, then either finish or run the calls and go round again. Every step is '
+      + 'recorded as an item, which is why the UI can show tool activity at all.',
+      'MAX_TOOL_ITERATIONS bounds it. Running out appends an error item instead of looping forever, '
+      + 'and a failing tool comes back with isError so the model gets a chance to recover on its own.',
     ],
     excerpts: [
       {
@@ -326,23 +317,18 @@ for (let iteration = 0; iteration < this.#maxToolIterations; iteration++) {
     id: 'out-of-scope',
     kicker: 'Future considerations',
     title: 'What I left out, and why each one is a choice',
-    lede: 'The brief rules out auth, persistence, multiple users and providers, UI configuration, '
-      + 'streaming, parallel tool calls, human approval, uploads, deployment and broad test coverage. '
-      + 'Three of those left a mark worth talking about.',
+    lede: 'The brief rules out auth, persistence, streaming, parallel tool calls, deployment and broad '
+      + 'test coverage, among others. A few of those left a mark worth talking about.',
     points: [
-      'Non-streaming is the one with a real user-facing cost: nothing renders until the whole turn '
-      + 'finishes, so a multi-round tool loop looks like a long pause. The UI covers it with a '
-      + 'pending state, and the item union is already the unit of streaming if it is revisited.',
-      'Errors are conversation items, not failed requests. A provider outage or a blown iteration '
-      + 'budget still returns 201 with an error item, so the transcript the user already has '
-      + 'survives. Only malformed requests are non-2xx.',
-      'A failing tool is neither of those — it comes back as a tool_result with isError, fed to the '
-      + 'model so it can retry with a better path instead of the turn dying there.',
-      'Tests are narrow on purpose and say so: the service loop, the message mapper and the API '
-      + 'contract, against hand-rolled fakes. No coverage target, and one end-to-end smoke run '
-      + 'against the real model and MCP server to prove the wiring.',
-      'Not a Go or Java backend. That is the deviation I would put first on the table, and ADR 0001 '
-      + 'exists so the reasoning is reviewable rather than assumed.',
+      'Non-streaming is the one with a real user-facing cost: nothing renders until the turn finishes, '
+      + 'so a multi-round tool loop looks like a long pause. The UI covers it with a pending state.',
+      'Errors are conversation items rather than failed requests. A provider outage still returns 201 '
+      + 'with an error item, so the transcript the user already has survives. Only malformed requests '
+      + 'get a non-2xx.',
+      'A failing tool is neither of those. It comes back as a tool_result with isError and goes '
+      + 'straight to the model, so it can retry with a better path instead of the turn dying there.',
+      'Tests are narrow on purpose: the service loop, the message mapper and the API contract, against '
+      + 'hand-rolled fakes. No coverage target, plus one end-to-end smoke run to prove the wiring.',
     ],
     excerpts: [
       {
@@ -370,21 +356,20 @@ for (let iteration = 0; iteration < this.#maxToolIterations; iteration++) {
     id: 'next',
     kicker: 'Future considerations',
     title: 'What the next few hours would buy',
-    lede: 'In rough order of what the current design is already shaped for — each of these is a seam '
-      + 'that exists, not a rewrite.',
+    lede: 'Roughly in the order the current design is already shaped for. Each one is a seam that '
+      + 'exists rather than a rewrite.',
     points: [
-      'Stream the same items over SSE. The transport changes; the domain model and the frontend\'s '
+      'Stream the same items over SSE. The transport changes, the domain model and the frontend\'s '
       + 'append-only reducer do not.',
-      'Persistence: ConversationRepository is already the seam. A real store is one new class plus one '
-      + 'line in the composition root, and it would also fix the one transport failure retrying '
-      + 'cannot — a backend restart invalidating the id the tab is holding.',
+      'Persistence, where ConversationRepository is already the seam: one new class plus one line in '
+      + 'the composition root. It would also fix the one transport failure retrying cannot, which is a '
+      + 'backend restart invalidating the id your tab is holding.',
       'Parallel tool calls. The provider hands back an array and the loop deliberately runs it in '
-      + 'order; concurrency here is a scheduling change, not a model change.',
-      'Human approval before a tool runs. The tool_call item is already the natural pause point — it '
-      + 'exists before the call is executed.',
-      'Cancelling a turn in flight. The iteration cap is a budget, not a stop button.',
-      'Markdown rendering for assistant text, with sanitisation, and the item union moved into a '
-      + 'shared workspace package so the frontend mirror cannot drift.',
+      + 'order, so concurrency is a scheduling change rather than a model change.',
+      'Human approval before a tool runs, since the tool_call item already exists as the natural '
+      + 'pause point. Cancelling a turn in flight, too (the iteration cap is a budget, not a stop button).',
+      'Markdown rendering for assistant text, and the item union moved into a shared package so the '
+      + 'frontend mirror cannot drift.',
     ],
     excerpts: [
       {
