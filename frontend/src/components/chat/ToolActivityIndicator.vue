@@ -14,7 +14,6 @@
       <span class="tool-activity__dot" />
       <span class="tool-activity__dot" />
     </span>
-    Working — the assistant may be calling tools
   </p>
 </template>
 
