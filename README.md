@@ -175,7 +175,7 @@ broad test coverage.
 
 ## Time allocation
 
-Roughly four hours, so the bottom of the timebox.
+Roughly four-five hours.
 
 | Area | Time |
 | --- | --- |
@@ -186,7 +186,7 @@ Roughly four hours, so the bottom of the timebox.
 | Frontend: chat UI and states | 0:40 |
 | Frontend: walkthrough pane | 0:25 |
 | Docs and cleanup | 0:20 |
-| **Total** | **~4:00** |
+| **Total** | **~4-5:00** |
 
 The order matters more than the numbers. The design and the domain model came first, because
 the conversation-item union is the contract both sides are built against and getting it wrong
@@ -198,3 +198,7 @@ right, and the research behind it is in
 The walkthrough pane was built last, deliberately. It's the one thing here that isn't asked
 for, so it only got time once the loop worked end to end and had been smoke-tested against the
 real model and the real server ([`docs/smoke-test.md`](docs/smoke-test.md)).
+
+Special thanks to Claude Code with [Matt Pocock's skills](https://github.com/mattpocock/skills) for helping provide the actual code implementation in a reasonable amount of time.
+
+![Claude sessions throuoghout the project](screenshots/claude-sessions.png)
