@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { ConversationItem } from '@/types/conversation'
+import type { ConversationItem } from '@/types/conversation.types'
 import { storeToRefs } from 'pinia'
 import { nextTick, onMounted, ref, watch } from 'vue'
 import ChatComposer from '@/components/chat/ChatComposer.vue'
@@ -8,7 +8,7 @@ import UserMessage from '@/components/chat/items/UserMessage.vue'
 import { toolCallElementId } from '@/components/chat/tool-call-element-id'
 import ToolActivityIndicator from '@/components/chat/ToolActivityIndicator.vue'
 import TransportErrorBanner from '@/components/chat/TransportErrorBanner.vue'
-import { useChatStore } from '@/stores/chat'
+import { useChatStore } from '@/stores/chat.store'
 
 /**
  * The chat pane: transcript, in-flight state, composer. It owns scrolling and

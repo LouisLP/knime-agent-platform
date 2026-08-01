@@ -1,4 +1,9 @@
-import type { ConversationId, ConversationItem, ToolCallItem } from '@/types/conversation'
+import type {
+  ConversationId,
+  ConversationItem,
+  ToolCallId,
+  ToolCallItem,
+} from '@/types/conversation.types'
 import { defineStore } from 'pinia'
 import { computed, ref, shallowRef } from 'vue'
 import { ApiError, chatClient } from '@/api/chat.client'
@@ -25,8 +30,11 @@ export interface TransportFailure {
  */
 export const useChatStore = defineStore('chat', () => {
   const conversationId = ref<ConversationId | null>(null)
-  /** Items are replaced wholesale, never mutated in place — shallow is enough. */
-  const items = shallowRef<ConversationItem[]>([])
+  /**
+   * Items are replaced wholesale, never mutated in place — shallow is enough,
+   * and `readonly` holds consumers to the same rule the store follows.
+   */
+  const items = shallowRef<readonly ConversationItem[]>([])
 
   const isStarting = ref(false)
   const isSending = ref(false)
@@ -41,7 +49,7 @@ export const useChatStore = defineStore('chat', () => {
    * Tool calls by id, so a `tool_result` can name what it answers without the
    * list component walking the array for every result it renders.
    */
-  const toolCallsById = computed(
+  const toolCallsById = computed<ReadonlyMap<ToolCallId, ToolCallItem>>(
     () => new Map(
       items.value
         .filter((item): item is ToolCallItem => item.type === 'tool_call')

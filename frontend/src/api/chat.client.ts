@@ -4,11 +4,11 @@ import type {
   ConversationId,
   ErrorCode,
   SendMessageResult,
-} from '@/types/conversation'
+} from '@/types/conversation.types'
 
 /**
  * The only place that knows the backend exists. Every response is typed as the
- * shared contract (`@/types/conversation`), and every failure — network down,
+ * shared contract (`@/types/conversation.types`), and every failure — network down,
  * non-2xx, malformed body — surfaces as one `ApiError` so callers have a single
  * thing to catch.
  */

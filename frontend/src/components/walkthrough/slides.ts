@@ -75,7 +75,7 @@ export const decisionSlides: DecisionSlide[] = [
     lede: 'The backend returns five kinds of conversation item. The frontend\'s whole job is to render '
       + 'them faithfully and stay honest about what it cannot know yet.',
     points: [
-      'types/conversation.ts mirrors the backend union field for field, so responses render with no '
+      'types/conversation.types.ts mirrors the backend union field for field, so responses render with no '
       + 'mapping layer in between. The price is a manual copy across (a shared package would fix that '
       + 'in a longer-lived codebase).',
       'ConversationItemView is the only place that switches on the discriminant. It is a v-if chain '
